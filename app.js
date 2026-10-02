@@ -1,4 +1,3 @@
-
 const {SU,SK}=window.CONFIG||{},PERFIL=window.PERFIL||'operador',NOMES={operador:'Operador',lider:'Líder',admin:'Administrador'},K='mq_'+PERFIL;
 const sb=PERFIL==='treinamento'?null:supabase.createClient(SU,SK),TURNOS=['1º turno','2º turno','3º turno'],A=document.getElementById('app');
 let S={v:'login',w:null,fin:false,mode:'iniciar'};try{Object.assign(S,JSON.parse(localStorage.getItem(K)||'{}'))}catch(e){}
