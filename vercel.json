@@ -1,0 +1,3 @@
+{
+  "functions": { "api/excel.py": { "includeFiles": "api/_modelo.xlsx" } }
+}

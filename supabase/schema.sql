@@ -131,3 +131,10 @@ begin perform sess(p_token,array['admin']); update produtos set ativo=false wher
 -- Batimento: etapas [{tipo, tempo (s), tina, ferramenta}] por produto
 create or replace function admin_batimento(p_token uuid, p_produto int, p_etapas jsonb) returns void language plpgsql security definer set search_path=public as $$
 begin perform sess(p_token,array['admin']); update produtos set batimento=coalesce(p_etapas,'[]'::jsonb) where id=p_produto; end $$;
+
+-- Dados de um dia/turno para exportar no formulário FM-000219 (admin)
+create or replace function admin_dia(p_token uuid, p_dia int) returns json language plpgsql security definer set search_path=public as $$
+declare d dias; begin
+  perform sess(p_token,array['admin']);
+  select * into d from dias where id=p_dia;
+  return json_build_object('data',d.data,'turno',d.turno,'bateladas',(select coalesce(json_agg(json_build_object('lote',b.lote,'produto',pr.nome,'hi',to_char(b.inicio at time zone 'America/Sao_Paulo','HH24:MI'),'hf',to_char(b.fim at time zone 'America/Sao_Paulo','HH24:MI'),'rep_linha',b.rep_linha,'rep_congelado',b.rep_congelado,'diosna',b.diosna,'temp',b.temperatura,'operador',b.operador) order by b.id),'[]') from bateladas b join produtos pr on pr.id=b.produto_id where b.dia_id=d.id)); end $$;

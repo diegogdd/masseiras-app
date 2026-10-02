@@ -31,3 +31,7 @@ Cada endereço só aceita o login do seu perfil.
 No painel Admin: cadastre usuários e senhas, produtos e receitas de batimento. A meta do dia é definida pelo líder, no acesso dele.
 
 Se você já rodou uma versão anterior do `schema.sql`, apague as tabelas antigas (ou crie um projeto novo) antes de rodar esta.
+
+## Excel do histórico (admin)
+No `/admin`, em Histórico de produção, escolha o dia e o turno e clique em **Baixar Excel**. O arquivo segue o formulário FM-000219 (uma página por produto, com 37 lotes por página) e já vem configurado para imprimir em A4.
+A geração roda em uma função da Vercel (`api/excel.py`); o arquivo `requirements.txt` instala o que ela precisa. Se já tinha rodado o `schema.sql`, rode também `supabase/migracao-excel.sql`.
