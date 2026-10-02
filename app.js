@@ -10,7 +10,7 @@ const hm=t=>t?new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-d
 const fd=d=>d?d.split('-').reverse().join('/'):'';
 const SV=p=>`<svg class=ic viewBox="0 0 120 120" width=240 height=240 aria-hidden=true fill=none stroke=currentColor stroke-width=6 stroke-linejoin=round stroke-linecap=round>${p}</svg>`;
 const ICS=[SV('<path d="M30 12h60v12H30z"/><path d="M30 24h60l6 84H24z"/><path d="M42 60q18-14 36 0M42 82q18-14 36 0"/>'),SV('<path d="M60 12l42 24v48L60 108 18 84V36z"/><path d="M18 36l42 24 42-24M60 60v48"/>')];
-const IC=['fermento','gelo'].map((n,i)=>`<img class=foto src="/img/${n}.jpg" alt="${n}" onerror="this.style.display='none';this.nextElementSibling.hidden=false"><span hidden>${ICS[i]}</span>`);
+const IC=['fermento','gelo'].map((n,i)=>`<img class=foto src="/img/${n}.png" alt="${n}" onerror="this.style.display='none';this.nextElementSibling.hidden=false"><span hidden>${ICS[i]}</span>`);
 async function rpc(fn,a){if(PERFIL==='treinamento')return demoRpc(fn,a);const {data,error}=await sb.rpc(fn,Object.assign({p_token:S.token},a||{}));if(error){if(/Sessão inválida/.test(error.message)){S.token=null;go('login')}else alert(error.message);throw error}return data}
 const go=v=>{S.v=v;save();R()};
 async function R(){if(!S.token&&S.v!=='login')S.v='login';try{await V[S.v]()}catch(e){console.error(e)}}
