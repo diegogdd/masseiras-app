@@ -8,7 +8,7 @@ h1,h2{margin:0 0 14px}h2{font-size:30px}h3{margin:22px 0 8px}
 button{font:inherit;font-weight:600;border:2px solid var(--pri);background:var(--card);color:var(--pri);border-radius:10px;padding:12px 20px;min-height:56px;cursor:pointer}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--run);outline-offset:2px}
 button.big{background:var(--pri);color:var(--on);font-size:22px;min-height:72px;padding:14px 28px}button.sel{background:var(--pri);color:var(--on)}button:disabled{opacity:.4}
-.c{display:flex;flex-direction:column;gap:16px;max-width:420px;margin:8vh auto}
+.c{display:flex;flex-direction:column;gap:15px;max-width:420px;margin:8vh auto}
 label{display:flex;flex-direction:column;gap:6px;font-weight:600}
 input,select,textarea{font:inherit;padding:14px;border:2px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx)}
 .er{color:var(--er);min-height:1.2em;margin:0}.ctr{display:flex;flex-direction:column;align-items:center;gap:22px;margin-top:10vh}.ctr .big{font-size:30px;padding:34px 56px}
