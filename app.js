@@ -7,14 +7,13 @@ const save=()=>{try{localStorage.setItem(K,JSON.stringify({token:S.token,perfil:
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const hm=t=>t?new Date(t).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'—';
 const fd=d=>d?d.split('-').reverse().join('/'):'';
-const SV=p=>`<svg class=ic viewBox="0 0 120 120" width=240 height=240 aria-hidden=true fill=none stroke=currentColor stroke-width=6 stroke-linejoin=round stroke-linecap=round>${p}</svg>`;
-const IC=[SV('<path d="M30 12h60v12H30z"/><path d="M30 24h60l6 84H24z"/><path d="M42 60q18-14 36 0M42 82q18-14 36 0"/>'),SV('<path d="M60 12l42 24v48L60 108 18 84V36z"/><path d="M18 36l42 24 42-24M60 60v48"/>')];
+const IC=['fermento','gelo'].map(n=>`<img class=ic src="/img/${n}.png" width=240 height=240 alt="">`);
 async function rpc(fn,a){const {data,error}=await sb.rpc(fn,Object.assign({p_token:S.token},a||{}));if(error){if(/Sessão inválida/.test(error.message)){S.token=null;go('login')}else alert(error.message);throw error}return data}
 const go=v=>{S.v=v;save();R()};
 async function R(){if(!S.token&&S.v!=='login')S.v='login';try{await V[S.v]()}catch(e){console.error(e)}}
 const rp=b=>[b.rep_congelado?'C':'',b.rep_linha?'L':''].filter(Boolean).join('/')||'—';
 const done=()=>S.E.bateladas.filter(b=>b.status==='Finalizada');
-const dh=()=>{const d=new Date();return `<span class=d>${d.toLocaleDateString('pt-BR')}</span><span>${d.toLocaleDateString('pt-BR',{weekday:'long'})}</span>`};
+const dh=()=>{const d=new Date();if(S.turno==='3º turno'&&d.getHours()>=12)d.setDate(d.getDate()+1);return `<span class=d>${d.toLocaleDateString('pt-BR')}</span><span>${d.toLocaleDateString('pt-BR',{weekday:'long'})}</span>`};
 function head(){const d=S.E&&S.E.dia;return `<header>${dh()}<span>${esc(S.perfil==='admin'?'Administrador':S.turno)}</span>${d&&S.perfil==='operador'?`<span class=pa>Produto atual: <b>${esc(d.produto)}</b></span>`:''}</header>`}
 function nav(){const o=S.perfil==='operador',l=S.perfil==='lider';return `<nav>${o?`<button onclick="go('${S.E&&S.E.dia?'main':'home'}')">Bateladas</button>`:''}${o||l?`<button onclick="S.fin=false;go('resumo')">Produção do Dia</button>`:''}<button onclick="go('hist')">Histórico de produção</button>${o?`<button onclick="go('rec')">Receitas (batimentos)</button>`:''}${l?`<button onclick="go('resumo')">Atualizar</button>`:''}<button onclick="sair()">Sair</button></nav>`}
 const home0=()=>S.perfil==='admin'?'admin':S.perfil==='lider'?'resumo':(S.E&&S.E.dia?'main':'home');

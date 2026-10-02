@@ -19,6 +19,12 @@ insert into usuarios(nome,perfil,turno,senha_hash) values
 ('Líder 1º turno','lider','1º turno',extensions.crypt('lider1',extensions.gen_salt('bf'))),('Líder 2º turno','lider','2º turno',extensions.crypt('lider2',extensions.gen_salt('bf'))),('Líder 3º turno','lider','3º turno',extensions.crypt('lider3',extensions.gen_salt('bf'))),
 ('Administrador','admin',null,extensions.crypt('admin123',extensions.gen_salt('bf')));
 
+-- Data de produção: o 3º turno começa à noite (~21:50) e termina de manhã (~05:30);
+-- a produção dele conta para o DIA SEGUINTE. Do meio-dia em diante, o 3º turno já é do dia seguinte.
+create or replace function data_producao(p_turno text, p_ts timestamptz default now()) returns date language sql stable as $$
+  select (p_ts at time zone 'America/Sao_Paulo')::date
+    + case when p_turno='3º turno' and extract(hour from p_ts at time zone 'America/Sao_Paulo')>=12 then 1 else 0 end $$;
+
 create or replace function sess(p_token uuid, p_perfis text[] default null) returns sessions language plpgsql security definer set search_path=public as $$
 declare s sessions; begin
   select * into s from sessions where token=p_token and criado>now()-interval '16 hours';
@@ -39,7 +45,7 @@ declare s sessions; d dias; begin
   select * into d from dias where turno=s.turno and status='aberto';
   return json_build_object(
     'produtos',(select coalesce(json_agg(p order by p.ordem),'[]') from produtos p where p.ativo),
-    'meta',(select m.meta from metas_dia m where m.turno=s.turno and m.data=coalesce(d.data,(now() at time zone 'America/Sao_Paulo')::date)),
+    'meta',(select m.meta from metas_dia m where m.turno=s.turno and m.data=coalesce(d.data,data_producao(s.turno))),
     'dia',case when d.id is null then null else (select json_build_object('id',d.id,'data',d.data,'turno',d.turno,'contador',d.contador,'produto_id',d.produto_id,'produto',pr.nome) from produtos pr where pr.id=d.produto_id) end,
     'bateladas',(select coalesce(json_agg(json_build_object('id',b.id,'lote',b.lote,'produto',pr.nome,'inicio',b.inicio,'fim',b.fim,'rep_linha',b.rep_linha,'rep_congelado',b.rep_congelado,'diosna',b.diosna,'temperatura',b.temperatura,'operador',b.operador,'status',b.status) order by b.id),'[]') from bateladas b join produtos pr on pr.id=b.produto_id where b.dia_id=d.id)); end $$;
 
@@ -47,7 +53,7 @@ create or replace function iniciar_dia(p_token uuid, p_produto int) returns void
 declare s sessions; begin
   s:=sess(p_token,array['operador']);
   if exists(select 1 from dias where turno=s.turno and status='aberto') then return; end if;
-  insert into dias(data,turno,produto_id) values((now() at time zone 'America/Sao_Paulo')::date,s.turno,p_produto); end $$;
+  insert into dias(data,turno,produto_id) values(data_producao(s.turno),s.turno,p_produto); end $$;
 
 -- Troca o produto e zera o lote; bateladas em andamento terminam normalmente com o produto antigo.
 create or replace function trocar_produto(p_token uuid, p_produto int) returns void language plpgsql security definer set search_path=public as $$
@@ -115,7 +121,7 @@ create or replace function definir_meta(p_token uuid, p_meta int) returns void l
 declare s sessions; dt date; begin
   s:=sess(p_token,array['lider']);
   select data into dt from dias where turno=s.turno and status='aberto';
-  insert into metas_dia(data,turno,meta) values(coalesce(dt,(now() at time zone 'America/Sao_Paulo')::date),s.turno,p_meta)
+  insert into metas_dia(data,turno,meta) values(coalesce(dt,data_producao(s.turno)),s.turno,p_meta)
   on conflict(data,turno) do update set meta=p_meta; end $$;
 
 -- Produtos: excluir apenas esconde (o histórico antigo continua intacto)
