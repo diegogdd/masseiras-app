@@ -1,0 +1,2 @@
+Coloque aqui as fotos: fermento.png e gelo.png (com estes nomes exatos).
+Use fotos leves (até uns 300 KB) para abrirem rápido no tablet.

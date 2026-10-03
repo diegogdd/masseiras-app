@@ -1,0 +1,1 @@
+Logos dos moinhos: bunge.png, realta.png (nome do moinho em minúsculas, sem acentos nem espaços; espaço vira hífen).

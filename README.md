@@ -18,6 +18,8 @@ Em vercel.com, **Add New > Project**, importe o repositório e clique em **Deplo
 - `seusite.vercel.app/operador` para o tablet da linha (deixe este endereço salvo/adicionado à tela inicial)
 - `seusite.vercel.app/lider` para os líderes
 - `seusite.vercel.app/admin` para o administrador
+- `seusite.vercel.app/farinha` para o operador de ponte rolante (Abastecimento Farinha)
+- `seusite.vercel.app/treinamento` para treinamentos (dados fictícios, só no navegador)
 
 Cada endereço só aceita o login do seu perfil.
 
@@ -35,3 +37,12 @@ Se você já rodou uma versão anterior do `schema.sql`, apague as tabelas antig
 ## Excel do histórico (admin)
 No `/admin`, em Histórico de produção, escolha o dia e o turno e clique em **Baixar Excel**. O arquivo segue o formulário FM-000219 (uma página por produto, com 37 lotes por página) e já vem configurado para imprimir em A4.
 A geração roda em uma função da Vercel (`api/excel.py`); o arquivo `requirements.txt` instala o que ela precisa. Se já tinha rodado o `schema.sql`, rode também `supabase/migracao-excel.sql`.
+
+## Abastecimento de farinha
+- No `/admin`, em Usuários, crie um acesso do tipo **farinha** (sem turno) com a senha do operador de ponte rolante. Em **Moinhos de farinha** cadastre os moinhos (já vêm Bunge e Realta).
+- No `/farinha`, o operador informa moinho e lote de cada moega e vê o histórico de trocas.
+- A troca só vale a partir da batelada seguinte à que já está carregada na balança. Cada batelada guarda a mescla usada.
+- Na masseira, depois de escolher a Diosna, aparece a mescla atual (logo e lote de cada moinho), os avisos de troca e o botão CIENTE.
+- Logos: `img/moinhos/bunge.png`, `img/moinhos/realta.png` (nome em minúsculas).
+- No histórico do admin: **Baixar Excel** (formulário FM-000219), **Excel da farinha** (moinho e lote por batelada, arquivo separado) e **Excluir** produção.
+- Se o banco já existe, rode `supabase/migracao-farinha.sql` no SQL Editor.
