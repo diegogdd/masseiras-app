@@ -51,7 +51,7 @@ mescla(){const M=S.mescla,f=M.farinha||[];A.innerHTML=head()+`<main><h2>Mescla d
 async ajuda(){if(S.perfil!=='operador')return go(home0());await load();A.innerHTML=head()+nav()+`<main><h2>Como usar</h2><ol class=passos>${PASSOS.map(x=>`<li><b>${x[0]}</b>${x[1]}</li>`).join('')}</ol></main>`},
 async report(){if(S.perfil!=='lider')return go(home0());const H=await rpc('historico');
 if(!H.length){A.innerHTML=head()+nav()+'<main><h2>Report de produção do dia</h2><p>Nenhuma produção registrada neste turno.</p></main>';return}
-if(!S.rd||!H.some(x=>x.id==S.rd))S.rd=H[0].id;const r=await rpc('report_dia',{p_dia:S.rd});S.RP={H,r,v:repVals(r)};drawReport()},
+if(!S.rd||!H.some(x=>x.id==S.rd))S.rd=H[0].id;const r=await rpc('report_dia',{p_dia:S.rd});S.RP={H,r,v:repVals(r)};S.RP.abs=Object.assign({},S.RP.v.abs);drawReport()},
 async farinha(){S.F=await rpc('farinha_estado');S.FM=await fetchMassas();drawFarinha()},
 async admin(){S.AD=await rpc('admin_listar');S.RH=await rpc('admin_rh');drawAdmin()}};
 const PASSOS=[
@@ -69,8 +69,8 @@ const PASSOS=[
 const slug=n=>String(n).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
 const logo=n=>`<img class=logo src="/img/moinhos/${slug(n)}.png" alt="${esc(n)}" onerror="this.style.display='none';this.nextElementSibling.hidden=false"><b class=mn hidden>${esc(n)}</b>`;
 const tile=(m,v,extra)=>`<div class=tile><small>Moega ${m}</small>${v?logo(v.moinho)+`<div class=lt>Lote: <b>${esc(v.lote)}</b></div>`:'<div class=lt>Não informado</div>'}${extra||''}</div>`;
-function drawFarinha(){const F=S.F;A.innerHTML=head()+`<nav><button onclick="sair()">Sair</button></nav><main><h2>Abastecimento Farinha</h2><div id=fm2>${massasHtml()}</div><div class=tiles>${[1,2].map(m=>{const v=F.pendente.find(x=>x.moega===m)||F.vigente.find(x=>x.moega===m);return tile(m,v,(v&&v.absorcao!=null?`<div class=lt>Absorção: <b>${String(v.absorcao).replace('.',',')}%</b></div>`:'')+`<button onclick="S.ft=${m};drawFarinha()">Trocar lote/moinho</button>`)}).join('')}</div>${S.ft?`<h3>Trocar a Moega ${S.ft}</h3><div class=f><label>Moinho<select id=fm>${F.moinhos.map(n=>`<option>${esc(n)}</option>`).join('')}</select></label><label>Lote<input id=fl autocomplete=off></label><label>Absorção da farinha (%)<input id=fa type=number step=any min=0 inputmode=decimal></label><button class=big onclick=trocaF()>Confirmar troca</button><button onclick="S.ft=null;drawFarinha()">Cancelar</button></div>`:''}<h3>Histórico de trocas</h3><div class=wrap><table><tr><th>Data e hora<th>Moega<th>Moinho<th>Lote<th>Absorção</tr>${F.historico.length?F.historico.map(h=>`<tr><td>${new Date(h.registrado_em).toLocaleString('pt-BR')}<td>${h.moega}<td>${esc(h.moinho)}<td>${esc(h.lote)}<td>${h.absorcao==null?'—':String(h.absorcao).replace('.',',')+'%'}</tr>`).join(''):'<tr><td colspan=5>Nenhuma troca registrada.</tr>'}</table></div></main>`}
-async function trocaF(){const m=document.getElementById('fm').value,l=document.getElementById('fl').value.trim();if(!l)return alert('Informe o lote.');if(!confirm('Confirmar a troca da Moega '+S.ft+' para '+m+', lote '+l+'?'))return;const ab=document.getElementById('fa').value;await rpc('farinha_trocar',{p_moega:S.ft,p_moinho:m,p_lote:l,p_absorcao:ab===''?null:parseFloat(ab)});S.ft=null;R()}
+function drawFarinha(){const F=S.F;A.innerHTML=head()+`<nav><button onclick="sair()">Sair</button></nav><main><h2>Abastecimento Farinha</h2><div id=fm2>${massasHtml()}</div><h3>Absorção da farinha</h3><div class=f><label>Absorção geral (%)<input id=fab type=number step=any min=0 inputmode=decimal value="${F.absorcao?F.absorcao.valor:''}"></label><button class=big onclick=salvaAbs()>Salvar absorção</button></div>${F.absorcao?`<p>Valor atual: <b>${fR(F.absorcao.valor)}%</b> · informado em ${new Date(F.absorcao.registrado_em).toLocaleString('pt-BR')}</p>`:'<p>Nenhuma absorção informada ainda.</p>'}<div class=tiles>${[1,2].map(m=>{const v=F.pendente.find(x=>x.moega===m)||F.vigente.find(x=>x.moega===m);return tile(m,v,`<button onclick="S.ft=${m};drawFarinha()">Trocar lote/moinho</button>`)}).join('')}</div>${S.ft?`<h3>Trocar a Moega ${S.ft}</h3><div class=f><label>Moinho<select id=fm>${F.moinhos.map(n=>`<option>${esc(n)}</option>`).join('')}</select></label><label>Lote<input id=fl autocomplete=off></label><button class=big onclick=trocaF()>Confirmar troca</button><button onclick="S.ft=null;drawFarinha()">Cancelar</button></div>`:''}<h3>Histórico de trocas</h3><div class=wrap><table><tr><th>Data e hora<th>Moega<th>Moinho<th>Lote</tr>${F.historico.length?F.historico.map(h=>`<tr><td>${new Date(h.registrado_em).toLocaleString('pt-BR')}<td>${h.moega}<td>${esc(h.moinho)}<td>${esc(h.lote)}</tr>`).join(''):'<tr><td colspan=4>Nenhuma troca registrada.</tr>'}</table></div></main>`}
+async function trocaF(){const m=document.getElementById('fm').value,l=document.getElementById('fl').value.trim();if(!l)return alert('Informe o lote.');if(!confirm('Confirmar a troca da Moega '+S.ft+' para '+m+', lote '+l+'?'))return;await rpc('farinha_trocar',{p_moega:S.ft,p_moinho:m,p_lote:l});S.ft=null;R()}
 async function excluirDia(id){if(!confirm('Excluir esta produção? Todas as bateladas deste dia e turno serão apagadas e isso não pode ser desfeito.'))return;await rpc('admin_excluir_dia',{p_dia:id});R()}
 async function addm(){await rpc('admin_moinho',{p_nome:document.getElementById('nm').value});R()}
 async function delm(n){if(confirm('Excluir o moinho '+n+'?')){await rpc('admin_excluir_moinho',{p_nome:n});R()}}
@@ -81,8 +81,7 @@ const fR=x=>String(x).replace('.',',');
 const RCAMPOS=[['ordem','Nº Ordem (bipe o código de barras)','t'],['planejado','Planejado','n'],['produzido','Produzido','n'],['pacotes','Total de pacotes','n'],['mr0036','MR0036 consumidos (kg)','n'],['mescla','Mescla farinha','t'],['absorcao','Absorção de água','t'],['mr0001','MR0001 consumidos (kg)','n'],['mr0036g','MR0036 gerados (kg)','n'],['mr0027','MR0027 consumidos (kg)','n'],['gelo','Pacotes de gelo','n']];
 function repVals(r){const sv=r.salvo||{},sp=sv.prod||{},um=r.produtos.length===1;
 const pr=r.produtos.map(p=>{const s=sp[p.produto]||{},ms=r.moinhos.filter(m=>m.produto===p.produto),nomes=[...new Set(ms.map(m=>m.moinho.toUpperCase()))],
-ab=[...new Map(ms.filter(m=>m.absorcao!=null&&m.absorcao!=='').map(m=>[m.moinho+'|'+m.lote,Number(m.absorcao)])).values()],
-dflt={ordem:'',planejado:um?(r.dia.meta??''):'',produzido:p.massas,pacotes:p.massas*60,mr0036:p.congelado*22.5,mescla:nomes.length===2?'50/50'+nomes.join('/'):nomes.join('/'),absorcao:ab.length?fR((ab.reduce((x,y)=>x+y,0)/ab.length).toFixed(1))+'%':'',mr0001:0,mr0036g:0,mr0027:0,gelo:0},o={produto:p.produto,codigo:p.codigo||p.produto};
+dflt={ordem:'',planejado:um?(r.dia.meta??''):'',produzido:p.massas,pacotes:p.massas*60,mr0036:p.congelado*22.5,mescla:nomes.length===2?'50/50'+nomes.join('/'):nomes.join('/'),absorcao:r.absorcao!=null?fR(Number(r.absorcao))+'%':'',mr0001:0,mr0036g:0,mr0027:0,gelo:0},o={produto:p.produto,codigo:p.codigo||p.produto};
 RCAMPOS.forEach(([k])=>o[k]=s[k]??dflt[k]);return o});
 return{produtos:pr,estoque_gelo:sv.estoque_gelo??(r.estoque_gelo_anterior!=null?Number(r.estoque_gelo_anterior):0),abs:sv.abs||{},obs:sv.obs||''}}
 function drawReport(){const {H,r,v}=S.RP;
@@ -91,23 +90,64 @@ A.innerHTML=head()+nav()+`<main class=rep><h2>Report de produção diária</h2>
 ${v.produtos.length>1&&r.dia.meta!=null?`<p>Meta do dia definida pelo líder: <b>${r.dia.meta}</b> massas. Informe o planejado de cada produto.</p>`:''}
 ${v.produtos.length?`<div class=wrap><table><tr><th>${''}<th>${v.produtos.map(p=>`<th>${esc(p.codigo)}`).join('')}</tr>${RCAMPOS.map(([k,rot,t])=>`<tr><td><b>${rot}</b>${v.produtos.map((p,i)=>`<td><input id="rf_${k}_${i}" value="${esc(t==='n'?fR(p[k]):p[k])}" ${t==='n'?'inputmode=decimal':'autocomplete=off'}${k==='ordem'?` placeholder="Bipe aqui" onkeydown="if(event.key==='Enter'){event.preventDefault();var n=document.getElementById('rf_ordem_${i+1}');n?n.focus():this.blur()}"`:''}>${k==='ordem'?`<button type=button onclick="lerCam(${i})">Ler com a câmera</button>`:''}`).join('')}</tr>`).join('')}</table></div>`:'<p>Nenhuma massa registrada neste dia.</p>'}
 <div class=f><label>Estoque de gelo (pallets)<input id=reg value="${fR(v.estoque_gelo)}" inputmode=decimal></label></div>
-<h3>Absenteísmo <small id=sab></small></h3>${r.colaboradores.length?`<div class=wrap><table><tr><th>Colaborador<th>Situação</tr>${r.colaboradores.map(c=>`<tr><td>${esc(c.nome)}<td><select id="ra${c.id}" onchange="recalcR()"><option value="">Presente</option>${r.motivos.map(m=>`<option ${v.abs[c.id]===m?'selected':''}>${esc(m)}</option>`).join('')}</select></tr>`).join('')}</table></div>`:'<p>Nenhum colaborador cadastrado para este turno. O administrador cadastra na aba Admin.</p>'}
+<h3>Absenteísmo <small id=sab></small></h3><div id=absb></div>
 <label>Observação<textarea id=robs>${esc(v.obs)}</textarea></label>
-<div class=foot><button class=big onclick=salvaR()>Salvar report</button><button class=big onclick=baixaR()>Baixar Excel</button><button onclick=copiaR()>Copiar resumo</button><button onclick=limpaR()>Recalcular (descartar edições)</button></div></main>`;
-recalcR();setTimeout(()=>{const e=document.getElementById('rf_ordem_0');e&&!e.value&&e.focus()},60)}
-function recalcR(){const g=i=>document.getElementById(i),cs=S.RP.r.colaboradores,n=cs.filter(c=>g('ra'+c.id)&&g('ra'+c.id).value).length;g('sab')&&(g('sab').textContent=`Ausentes: ${n} de ${cs.length}`+(cs.length?` (${fR((n/cs.length*100).toFixed(1))}%)`:''))}
+<div class=foot><button class=big onclick=compartilhaR()>Compartilhar report</button><button class=big onclick=salvaR()>Salvar report</button><button class=big onclick=baixaR()>Baixar Excel</button><button onclick=copiaR()>Copiar resumo</button><button onclick=limpaR()>Recalcular (descartar edições)</button></div></main>`;
+drawAbs();document.fonts&&document.fonts.load('700 20px Barlow');setTimeout(()=>{const e=document.getElementById('rf_ordem_0');e&&!e.value&&e.focus()},60)}
 function coletaR(){const g=i=>document.getElementById(i),prod={},abs={};S.RP.v.produtos.forEach((p,i)=>{const o={};RCAMPOS.forEach(([k,,t])=>{const x=g(`rf_${k}_${i}`).value.trim();o[k]=t==='n'?(x===''?'':nR(x)):x});prod[p.produto]=o});
-S.RP.r.colaboradores.forEach(c=>{const m=g('ra'+c.id).value;if(m)abs[c.id]=m});return{prod,estoque_gelo:nR(g('reg').value),abs,obs:g('robs').value}}
-function payloadR(){const d=coletaR(),r=S.RP.r;return{data:r.dia.data,turno:r.dia.turno,produtos:S.RP.v.produtos.map(p=>Object.assign({produto:p.produto,codigo:p.codigo},d.prod[p.produto])),estoque_gelo:d.estoque_gelo,ausentes:r.colaboradores.filter(c=>d.abs[c.id]).map(c=>({nome:c.nome,motivo:d.abs[c.id]})),total_colab:r.colaboradores.length,obs:d.obs}}
+S.RP.r.colaboradores.forEach(c=>{if(S.RP.abs[c.id])abs[c.id]=S.RP.abs[c.id]});return{prod,estoque_gelo:nR(g('reg').value),abs,obs:g('robs').value}}
+function payloadR(){const d=coletaR(),r=S.RP.r;return{data:r.dia.data,turno:r.dia.turno,produtos:S.RP.v.produtos.map(p=>Object.assign({produto:p.produto,codigo:p.codigo},d.prod[p.produto])),estoque_gelo:d.estoque_gelo,ausentes:r.colaboradores.filter(c=>d.abs[c.id]).map(c=>({nome:c.nome,motivo:d.abs[c.id]})),obs:d.obs}}
 async function salvaR(q){await rpc('report_salvar',{p_dia:S.rd,p_dados:coletaR()});if(!q)alert('Report salvo.')}
 async function limpaR(){if(!confirm('Descartar as edições salvas e recalcular com os dados da produção?'))return;await rpc('report_limpar',{p_dia:S.rd});R()}
 async function baixaR(){await salvaR(1);const p=payloadR();let x;try{x=await fetch('/api/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)})}catch(e){return alert('Não foi possível gerar o Excel.')}
 if(!x.ok)return alert('Não foi possível gerar o Excel: '+await x.text());const b=await x.blob(),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='Report_producao_'+p.data+'_'+p.turno.replace(/\W/g,'')+'.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
 function copiaR(){const p=payloadR(),L=['REPORT DE PRODUÇÃO DIÁRIA JBT',p.turno.toUpperCase()+' - '+fd(p.data)];
 p.produtos.forEach(x=>{L.push('',x.codigo,...RCAMPOS.map(([k,rot])=>rot.replace(' (bipe o código de barras)','')+': '+(x[k]===''||x[k]==null?'-':fR(x[k]))))});
-L.push('','Total de gelo em estoque: '+fR(p.estoque_gelo)+' pallet',`Absenteísmo: ${p.ausentes.length} de ${p.total_colab}`+p.ausentes.map(a=>`\n- ${a.nome}: ${a.motivo}`).join(''),'Observação: '+(p.obs||'-'));const t=L.join('\n');
+L.push('','Total de gelo em estoque: '+fR(p.estoque_gelo)+' pallet','Absenteísmo: '+(p.ausentes.length?p.ausentes.map(a=>`\n- ${a.nome}: ${a.motivo}`).join(''):'nenhum'),'Observação: '+(p.obs||'-'));const t=L.join('\n');
 navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t).then(()=>alert('Resumo copiado.'),()=>prompt('Copie o resumo:',t)):prompt('Copie o resumo:',t)}
 async function salvaCod(id){await rpc('admin_produto_codigo',{p_id:id,p_codigo:document.getElementById('pc'+id).value});alert('Código salvo.')}
+// ---- Absorção geral da farinha (operador de ponte rolante) ----
+async function salvaAbs(){const v=parseFloat(String(document.getElementById('fab').value).trim().replace(',','.'));if(!(v>0&&v<=200))return alert('Informe a absorção da farinha em %.');await rpc('farinha_absorcao_salvar',{p_valor:v});R()}
+// ---- Absenteísmo: o líder adiciona só quem faltou ----
+function drawAbs(){const el=document.getElementById('absb');if(!el)return;const r=S.RP.r,ab=S.RP.abs,cs=r.colaboradores,ids=cs.filter(c=>ab[c.id]),livres=cs.filter(c=>!ab[c.id]);
+const sab=document.getElementById('sab');sab&&(sab.textContent=ids.length?`Ausentes: ${ids.length}`:'');
+el.innerHTML=(ids.length?`<div class=wrap><table><tr><th>Colaborador<th>Motivo<th></tr>${ids.map(c=>`<tr><td>${esc(c.nome)}<td><select onchange="mudaAbs(${c.id},this.value)">${r.motivos.map(m=>`<option ${ab[c.id]===m?'selected':''}>${esc(m)}</option>`).join('')}</select><td><button onclick="remAbs(${c.id})">Remover</button></tr>`).join('')}</table></div>`:'<p>Nenhum ausente adicionado.</p>')+
+(!cs.length?'<p>Nenhum colaborador cadastrado para este turno. O administrador cadastra na aba Admin.</p>':livres.length?`<div class=f><label>Colaborador<select id=abc><option value="">Escolha o colaborador</option>${livres.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('')}</select></label><label>Motivo<select id=abm><option value="">Escolha o motivo</option>${r.motivos.map(m=>`<option>${esc(m)}</option>`).join('')}</select></label><button onclick=addAbs()>Adicionar ausente</button></div>`:'')}
+function addAbs(){const c=document.getElementById('abc').value,m=document.getElementById('abm').value;if(!c||!m)return alert('Escolha o colaborador e o motivo.');S.RP.abs[c]=m;drawAbs()}
+function mudaAbs(id,m){S.RP.abs[id]=m}
+function remAbs(id){delete S.RP.abs[id];drawAbs()}
+// ---- Imagem do report para compartilhar (WhatsApp) ----
+const fvR=(v,d)=>{if(v===''||v==null)return '';if(d<0||typeof v!=='number')return String(v);return v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})};
+const RIMG=[['ordem','Nº ORDEM',-1],['planejado','PLANEJADO',0],['produzido','PRODUZIDO',0],['pacotes','TOTAL DE PACOTES',0],['mr0036','MR0036 CONSUMIDOS',2],['mescla','MESCLA FARINHA',-1],['absorcao','ABSORÇÃO DE ÁGUA',-1],['mr0001','MR0001 CONSUMIDOS',2],['mr0036g','MR0036 GERADOS',2],['mr0027','MR0027 CONSUMIDOS',2],['gelo','PACOTES DE GELO',0]];
+function imgR(p){return new Promise((ok,ko)=>{
+const W=[250,215,26,215,270],X=[0];W.forEach((w,i)=>X.push(X[i]+w));const TW=X[5],M=12,SC=2,RH=40,TH=54,GAP=14,ft='Barlow,Arial,Helvetica,sans-serif',
+AZ='#4472C4',ROT='#B4C6E7',LAR='#FFC000',VD='#00B050',CL='#DDEBF7',CZ='#D6DCE4',CZ2='#D9D9D9',VM='#FF0000';
+let ctx=document.createElement('canvas').getContext('2d');
+const wrap=(t,w)=>{const o=[];String(t).split('\n').forEach(par=>{let ln='';par.split(/\s+/).forEach(wd=>{const tt=ln?ln+' '+wd:wd;if(ln&&ctx.measureText(tt).width>w){o.push(ln);ln=wd}else ln=tt});o.push(ln)});return o};
+const fit=(t,w,h,s0,b)=>{let s=s0,L;for(;s>=10;s--){ctx.font=`${b===false?400:700} ${s}px ${ft}`;L=wrap(t,w);if(L.length*s*1.2<=h&&L.every(l=>ctx.measureText(l).width<=w))break}return{s,L}};
+const pares=[];for(let i=0;i<Math.max(p.produtos.length,1);i+=2)pares.push(p.produtos.slice(i,i+2));
+const aus=p.ausentes.length?p.ausentes.map(a=>`${String(a.nome).toUpperCase()} (${a.motivo})`).join(' · '):'NENHUM';
+const wABS=W[1]+W[2]+W[3];ctx.font=`700 18px ${ft}`;const hA=Math.max(RH,wrap(aus,wABS-16).length*22+16);
+const H=M*2+pares.length*(TH+14*RH+hA)+(pares.length-1)*GAP;
+const c=document.createElement('canvas');c.width=(TW+M*2)*SC;c.height=H*SC;ctx=c.getContext('2d');ctx.scale(SC,SC);ctx.fillStyle='#fff';ctx.fillRect(0,0,TW+M*2,H);
+const cell=(x,y,w,h,fill,t,o)=>{o=o||{};ctx.fillStyle=fill||'#fff';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#000';ctx.lineWidth=1;ctx.strokeRect(x+.5,y+.5,w-1,h-1);if(t===''||t==null)return;
+const f=fit(t,w-14,h-8,o.s||18,o.b),lh=f.s*1.2;ctx.font=`${o.b===false?400:700} ${f.s}px ${ft}`;ctx.fillStyle=o.c||'#000';ctx.textAlign='center';ctx.textBaseline='middle';
+let y0=o.top?y+6+lh/2:y+h/2-(f.L.length-1)*lh/2;f.L.forEach((l,i)=>ctx.fillText(l,x+w/2,y0+i*lh))};
+let y=M;pares.forEach((par,bi)=>{const first=bi===0,x=i=>M+X[i],w3=wABS;
+cell(M,y,TW,TH,AZ,'REPORT DE PRODUÇÃO DIÁRIA JBT',{s:26,c:'#fff'});y+=TH;
+cell(x(0),y,W[0],RH,ROT,'TURNO');cell(x(1),y,w3,RH,VD,String(p.turno).toUpperCase());cell(x(4),y,W[4],RH,CZ2,'OBSERVAÇÃO');y+=RH;
+cell(x(0),y,W[0],RH,ROT,'DATA');cell(x(1),y,w3,RH,CL,fd(p.data));cell(x(4),y,W[4],RH,ROT,'total de gelo em estoque',{s:15,b:false});y+=RH;
+cell(x(0),y,W[0],RH,ROT,'PRODUTO');[0,1].forEach(k=>{const q=par[k];cell(x(k?3:1),y,W[k?3:1],RH,LAR,q?(q.codigo||q.produto):'',{s:20})});cell(x(2),y,W[2],RH,CZ,'');
+cell(x(4),y,W[4],RH,ROT,first&&p.estoque_gelo!==''&&p.estoque_gelo!=null?fR(p.estoque_gelo)+' pallet':'',{s:22});y+=RH;
+RIMG.forEach(([k,rot,d],i)=>{cell(x(0),y,W[0],RH,ROT,rot,{s:16});[0,1].forEach(j=>{const q=par[j];cell(x(j?3:1),y,W[j?3:1],RH,LAR,q?fvR(q[k],d):'',{s:20})});cell(x(2),y,W[2],RH,CZ,'');
+if(!(first&&i>=1))cell(x(4),y,W[4],RH,ROT,'');if(first&&i===1)cell(x(4),y,W[4],RH*10,ROT,p.obs,{s:18,top:true});y+=RH});
+cell(x(0),y,W[0],hA,ROT,'ABSENTEÍSMO',{s:16});cell(x(1),y,w3,hA,VM,first?aus:'',{s:18,c:'#fff'});cell(x(4),y,W[4],hA,ROT,'');y+=hA+GAP});
+c.toBlob(b=>b?ok(b):ko(new Error('Falha ao gerar a imagem')),'image/png')})}
+function baixaImg(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+async function compartilhaR(){const p=payloadR();let b;try{b=await imgR(p)}catch(e){return alert('Não foi possível gerar a imagem do report.')}
+salvaR(1).catch(()=>{});const n='Report_producao_'+p.data+'_'+p.turno.replace(/\W/g,'')+'.png',f=new File([b],n,{type:'image/png'});
+if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Report de produção JBT'});return}catch(e){if(e&&e.name==='AbortError')return}}
+baixaImg(b,n);alert('Este aparelho não abriu o compartilhamento. A imagem foi baixada: envie pelo WhatsApp a partir da galeria.')}
 // ---- Leitura do código de barras pela câmera (nº da ordem) ----
 const ZXURL='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
 const carregaZX=()=>window.ZXing?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src=ZXURL;s.onload=ok;s.onerror=no;document.head.appendChild(s)});

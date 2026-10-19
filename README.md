@@ -51,8 +51,9 @@ A geração roda em uma função da Vercel (`api/excel.py`); o arquivo `requirem
 - No `/lider`, o botão **Gerar report de produção do dia** abre o report do dia/turno escolhido, já preenchido com os dados do sistema: planejado (a meta), massas por produto, total de pacotes (massas × 60), reprocesso MR0036 (reprocesso congelado × 22,5 kg), moinhos usados e absorção da farinha. O líder pode editar qualquer campo.
 - O modelo é o "REPORT DE PRODUÇÃO DIÁRIA JBT": uma coluna por produto (até 2 por bloco; com 3 ou mais, o Excel ganha outro bloco). No `/admin`, em Produtos, cadastre o **código** de cada produto (ex.: PF0005), que aparece no report.
 - **Nº da ordem:** clique no campo e bipe o código de barras (leitor USB/Bluetooth que digita o código); o Enter passa para o próximo produto. Também dá para tocar em **Ler com a câmera** (celular ou tablet): no Chrome do Android usa o leitor nativo e nos demais navegadores carrega uma biblioteca de leitura. O site precisa estar em https (a Vercel já está) e o navegador pede permissão da câmera na primeira vez.
-- **Absorção da farinha:** o operador de ponte rolante informa a % ao trocar o lote em `/farinha`. Ela vai só para o report.
-- **Absenteísmo:** o admin cadastra os colaboradores por turno e os motivos; o líder marca quem faltou.
+- **Absorção da farinha:** é uma só, geral (não por moinho). O operador de ponte rolante digita a % no campo **Absorção da farinha** da tela inicial de `/farinha` e toca em **Salvar absorção**. O report já vem com esse valor (o que valia no fim da produção), e o líder pode editar.
+- **Absenteísmo:** o admin cadastra os colaboradores por turno e os motivos. No report o líder escolhe só quem faltou (colaborador + motivo) e toca em **Adicionar ausente**; não aparece a lista completa e não há porcentagem.
+- **Compartilhar report:** gera a imagem do report preenchido (mesmo modelo do Excel) e abre o menu de compartilhamento do celular para escolher o WhatsApp. Se o aparelho não tiver compartilhamento, a imagem é baixada.
 - **Salvar / Baixar Excel / Copiar resumo / Recalcular.** O Excel é gerado pela função `api/report.py`.
-- Se o banco já existe, rode `supabase/migracao-report.sql` e depois `supabase/migracao-report-v2.sql` no SQL Editor.
+- Se o banco já existe, rode `supabase/migracao-report.sql` depois `supabase/migracao-report-v2.sql` e por fim `supabase/migracao-report-v3.sql` no SQL Editor.
 
