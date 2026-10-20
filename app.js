@@ -82,7 +82,7 @@ const RCAMPOS=[['ordem','Nº Ordem (bipe o código de barras)','t'],['planejado'
 function repVals(r){const sv=r.salvo||{},sp=sv.prod||{},um=r.produtos.length===1;
 const pr=r.produtos.map(p=>{const s=sp[p.produto]||{},ms=r.moinhos.filter(m=>m.produto===p.produto),nomes=[...new Set(ms.map(m=>m.moinho.toUpperCase()))],
 dflt={ordem:'',planejado:um?(r.dia.meta??''):'',produzido:p.massas,pacotes:p.massas*60,mr0036:p.congelado*22.5,mescla:nomes.length===2?'50/50'+nomes.join('/'):nomes.join('/'),absorcao:r.absorcao!=null?fR(Number(r.absorcao))+'%':'',mr0001:0,mr0036g:0,mr0027:0,gelo:0},o={produto:p.produto,codigo:p.codigo||p.produto};
-RCAMPOS.forEach(([k])=>o[k]=s[k]??dflt[k]);return o});
+const au=(sv.auto||{})[p.produto]||{};RCAMPOS.forEach(([k])=>o[k]=(s[k]==null||(k in au&&String(s[k])===String(au[k])))?dflt[k]:s[k]);o.__d=dflt;return o});
 return{produtos:pr,estoque_gelo:sv.estoque_gelo??(r.estoque_gelo_anterior!=null?Number(r.estoque_gelo_anterior):0),abs:sv.abs||{},obs:sv.obs||''}}
 function drawReport(){const {H,r,v}=S.RP;
 A.innerHTML=head()+nav()+`<main class=rep><h2>Report de produção diária</h2>
@@ -95,7 +95,7 @@ ${v.produtos.length?`<div class=wrap><table class=rp><tr><th>${''}<th>${v.produt
 <div class=foot><button class=big onclick=compartilhaR()>Compartilhar report</button><button class=big onclick=salvaR()>Salvar report</button><button class=big onclick=baixaR()>Baixar Excel</button><button onclick=copiaR()>Copiar resumo</button><button onclick=limpaR()>Recalcular (descartar edições)</button></div></main>`;
 drawAbs();document.fonts&&document.fonts.load('700 20px Barlow');setTimeout(()=>{const e=document.getElementById('rf_ordem_0');e&&!e.value&&e.focus()},60)}
 function coletaR(){const g=i=>document.getElementById(i),prod={},abs={};S.RP.v.produtos.forEach((p,i)=>{const o={};RCAMPOS.forEach(([k,,t])=>{const x=g(`rf_${k}_${i}`).value.trim();o[k]=t==='n'?(x===''?'':nR(x)):x});prod[p.produto]=o});
-S.RP.r.colaboradores.forEach(c=>{if(S.RP.abs[c.id])abs[c.id]=S.RP.abs[c.id]});return{prod,estoque_gelo:nR(g('reg').value),abs,obs:g('robs').value}}
+S.RP.r.colaboradores.forEach(c=>{if(S.RP.abs[c.id])abs[c.id]=S.RP.abs[c.id]});const auto={};S.RP.v.produtos.forEach(p=>{if(p.__d)auto[p.produto]=p.__d});return{prod,auto,estoque_gelo:nR(g('reg').value),abs,obs:g('robs').value}}
 function payloadR(){const d=coletaR(),r=S.RP.r;return{data:r.dia.data,turno:r.dia.turno,produtos:S.RP.v.produtos.map(p=>Object.assign({produto:p.produto,codigo:p.codigo},d.prod[p.produto])),estoque_gelo:d.estoque_gelo,ausentes:r.colaboradores.filter(c=>d.abs[c.id]).map(c=>({nome:c.nome,motivo:d.abs[c.id]})),obs:d.obs}}
 async function salvaR(q){await rpc('report_salvar',{p_dia:S.rd,p_dados:coletaR()});if(!q)alert('Report salvo.')}
 async function limpaR(){if(!confirm('Descartar as edições salvas e recalcular com os dados da produção?'))return;await rpc('report_limpar',{p_dia:S.rd});R()}
