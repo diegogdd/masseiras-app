@@ -344,3 +344,6 @@ create or replace function report_limpar(p_token uuid, p_dia int) returns void l
 declare s sessions; begin
   s:=sess(p_token,array['lider']);
   delete from reports where dia_id=p_dia and exists(select 1 from dias where id=p_dia and turno=s.turno); end $$;
+
+-- ===== Report do dia anterior (líder do 1º turno) =====
+-- Rode também supabase/migracao-report-v3.sql (absorção geral) e supabase/migracao-report-geral.sql.
