@@ -193,7 +193,7 @@ async function gLimpa(){if(!confirm('Descartar as edições e recalcular com os 
 async function gBaixa(){gSync();const m=S.RG.m,ex=GSEC.filter(([k,,,cap])=>k!=='falt'&&m[k].length>cap).map(s=>s[1]);['1º','2º','3º'].forEach(t=>{if(m.falt.filter(f=>f.turno===t).length>6)ex.push('Faltantes '+t)});
 if(ex.length&&!confirm('Há mais linhas do que o modelo comporta em: '+ex.join(', ')+'. As linhas extras não vão para o Excel. Baixar mesmo assim?'))return;
 await gSalva(1);let x;try{x=await fetch('/api/report_geral',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:S.rgd,m})})}catch(e){return alert('Não foi possível gerar o Excel.')}
-if(!x.ok)return alert('Não foi possível gerar o Excel: '+await x.text());const b=await x.blob(),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='Report Email'+S.rgd+'.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+if(!x.ok)return alert('Não foi possível gerar o Excel: '+await x.text());const b=await x.blob(),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='REPORT EMAIL'+S.rgd+'.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
 async function addc(){await rpc('admin_colaborador',{p_nome:document.getElementById('cn').value,p_turno:document.getElementById('ct').value});R()}
 async function delc(id){if(confirm('Excluir este colaborador da lista?')){await rpc('admin_excluir_colaborador',{p_id:id});R()}}
 async function addmot(){await rpc('admin_motivo_abs',{p_nome:document.getElementById('nmo').value});R()}
