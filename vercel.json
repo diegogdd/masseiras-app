@@ -1,3 +1,10 @@
 {
-  "functions": { "api/excel.py": { "includeFiles": "api/_modelo.xlsx" } }
+  "functions": {
+    "api/excel.py": {
+      "includeFiles": "api/_modelo.xlsx"
+    },
+    "api/report_geral.py": {
+      "includeFiles": "api/_modelo_report.xlsx"
+    }
+  }
 }

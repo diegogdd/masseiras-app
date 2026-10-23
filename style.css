@@ -40,3 +40,4 @@ table{width:100%;border-collapse:collapse;background:var(--card)}th,td{padding:1
 .camb{padding:14px 18px calc(14px + env(safe-area-inset-bottom,0px));background:rgba(0,0,0,.85);color:#fff;text-align:center}.camb p{margin:0 0 10px;font-size:20px}.rep td button{margin-top:6px;min-height:44px;padding:8px 14px;font-size:16px}
 
 @media(max-width:700px){main.rep{padding:14px 12px}.rp,.rp tbody,.rp tr,.rp td{display:block;width:100%}.rp tr:first-child{display:none}.rp tr{padding:10px 0;border-bottom:1px solid var(--bd)}.rp td{border:0;padding:4px 0}.rp td[data-p]::before{content:attr(data-p);display:block;font-size:15px;color:var(--mut);font-weight:600;margin-bottom:2px}.rp td input{min-width:0;width:100%}.rp td button{width:100%}}
+.aviso{color:var(--run);font-weight:600}.aviso small{font-weight:600}

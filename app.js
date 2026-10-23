@@ -18,7 +18,7 @@ const rp=b=>[b.rep_congelado?'C':'',b.rep_linha?'L':''].filter(Boolean).join('/'
 const done=()=>S.E.bateladas.filter(b=>b.status==='Finalizada');
 const dh=()=>{const d=new Date();return `<span class=d>${d.toLocaleDateString('pt-BR')}</span><span>${d.toLocaleDateString('pt-BR',{weekday:'long'})}</span>`};
 function head(){const d=S.E&&S.E.dia;return (PERFIL==='treinamento'?'<div class=demo>MODO TREINAMENTO: dados fictícios, nada é gravado no sistema real</div>':'')+`<header>${dh()}<span>${esc(S.turno||NOMES[S.perfil])}</span>${d&&S.perfil==='operador'?`<span class=pa>Produto atual: <b>${esc(d.produto)}</b></span>`:''}</header>`}
-function nav(){const o=S.perfil==='operador',l=S.perfil==='lider';return `<nav>${o?`<button onclick="go('${S.E&&S.E.dia?'main':'home'}')">Bateladas</button>`:''}${o||l?`<button onclick="S.fin=false;go('resumo')">Produção do Dia</button>`:''}<button onclick="go('hist')">Histórico de produção</button>${o?`<button onclick="go('rec')">Receitas (batimentos)</button><button onclick="go('ajuda')">Como usar</button>`:''}${l?`<button onclick="go('report')">Gerar report de produção do dia</button><button onclick="go('resumo')">Atualizar</button>`:''}${PERFIL==='treinamento'?'<button onclick=metaDemo()>Definir meta de exemplo</button><button class=big onclick=zerar()>Zerar treinamento</button>':'<button onclick="sair()">Sair</button>'}</nav>`}
+function nav(){const o=S.perfil==='operador',l=S.perfil==='lider';return `<nav>${o?`<button onclick="go('${S.E&&S.E.dia?'main':'home'}')">Bateladas</button>`:''}${o||l?`<button onclick="S.fin=false;go('resumo')">Produção do Dia</button>`:''}<button onclick="go('hist')">Histórico de produção</button>${o?`<button onclick="go('rec')">Receitas (batimentos)</button><button onclick="go('ajuda')">Como usar</button>`:''}${l?`<button onclick="go('report')">Gerar report de produção do dia</button>${S.turno==='1º turno'?`<button onclick="go('geral')">Report do dia anterior</button>`:''}<button onclick="go('resumo')">Atualizar</button>`:''}${PERFIL==='treinamento'?'<button onclick=metaDemo()>Definir meta de exemplo</button><button class=big onclick=zerar()>Zerar treinamento</button>':'<button onclick="sair()">Sair</button>'}</nav>`}
 const home0=()=>S.perfil==='farinha'?'farinha':S.perfil==='admin'?'admin':S.perfil==='lider'?'resumo':(S.E&&S.E.dia?'main':'home');
 async function load(){S.E=await rpc('estado')}
 function sum(f){const p={};f.forEach(b=>p[b.produto]=(p[b.produto]||0)+1);const t=f.length;let h='—';if(t){const hr=(Math.max(...f.map(b=>Date.parse(b.fim)))-Math.min(...f.map(b=>Date.parse(b.inicio))))/36e5;if(hr>0)h=(t/hr).toFixed(1).replace('.',',')}
@@ -52,6 +52,8 @@ async ajuda(){if(S.perfil!=='operador')return go(home0());await load();A.innerHT
 async report(){if(S.perfil!=='lider')return go(home0());const H=await rpc('historico');
 if(!H.length){A.innerHTML=head()+nav()+'<main><h2>Report de produção do dia</h2><p>Nenhuma produção registrada neste turno.</p></main>';return}
 if(!S.rd||!H.some(x=>x.id==S.rd))S.rd=H[0].id;const r=await rpc('report_dia',{p_dia:S.rd});S.RP={H,r,v:repVals(r)};S.RP.abs=Object.assign({},S.RP.v.abs);drawReport()},
+async geral(){if(S.perfil!=='lider'||S.turno!=='1º turno')return go(home0());if(!S.rgd){const d=new Date(Date.now()-864e5);S.rgd=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+const g=await rpc('report_geral',{p_data:S.rgd}),b=geralBase(g);S.RG={g,m:(g.salvo&&g.salvo.m)||b.m,avisos:b.avisos,salvo:!!(g.salvo&&g.salvo.m)};drawGeral()},
 async farinha(){S.F=await rpc('farinha_estado');S.FM=await fetchMassas();drawFarinha()},
 async admin(){S.AD=await rpc('admin_listar');S.RH=await rpc('admin_rh');drawAdmin()}};
 const PASSOS=[
@@ -78,7 +80,7 @@ async function delm(n){if(confirm('Excluir o moinho '+n+'?')){await rpc('admin_e
 // ---- Report de produção do dia (líder): colunas por produto, como no modelo JBT ----
 const nR=x=>{const t=String(x).replace(',','.');return t===''?0:parseFloat(t)||0};
 const fR=x=>String(x).replace('.',',');
-const RCAMPOS=[['ordem','Nº Ordem (bipe ou digite o código de barras)','t'],['planejado','Planejado','n'],['produzido','Produzido','n'],['pacotes','Total de pacotes','n'],['mr0036','MR0036 consumidos (kg)','n'],['mescla','Mescla farinha','t'],['absorcao','Absorção de água','t'],['mr0001','MR0001 consumidos (kg)','n'],['mr0036g','MR0036 gerados (kg)','n'],['mr0027','MR0027 consumidos (kg)','n'],['gelo','Pacotes de gelo','n']];
+const RCAMPOS=[['ordem','Nº Ordem (bipe o código de barras)','t'],['planejado','Planejado','n'],['produzido','Produzido','n'],['pacotes','Total de pacotes','n'],['mr0036','MR0036 consumidos (kg)','n'],['mescla','Mescla farinha','t'],['absorcao','Absorção de água','t'],['mr0001','MR0001 consumidos (kg)','n'],['mr0036g','MR0036 gerados (kg)','n'],['mr0027','MR0027 consumidos (kg)','n'],['gelo','Pacotes de gelo','n']];
 function repVals(r){const sv=r.salvo||{},sp=sv.prod||{},um=r.produtos.length===1;
 const pr=r.produtos.map(p=>{const s=sp[p.produto]||{},ms=r.moinhos.filter(m=>m.produto===p.produto),nomes=[...new Set(ms.map(m=>m.moinho.toUpperCase()))],
 dflt={ordem:'',planejado:um?(r.dia.meta??''):'',produzido:p.massas,pacotes:p.massas*60,mr0036:p.congelado*22.5,mescla:nomes.length===2?'50/50'+nomes.join('/'):nomes.join('/'),absorcao:r.absorcao!=null?fR(Number(r.absorcao))+'%':'',mr0001:0,mr0036g:0,mr0027:0,gelo:0},o={produto:p.produto,codigo:p.codigo||p.produto};
@@ -88,7 +90,7 @@ function drawReport(){const {H,r,v}=S.RP;
 A.innerHTML=head()+nav()+`<main class=rep><h2>Report de produção diária</h2>
 <div class=f><label>Produção<select onchange="S.rd=this.value;R()">${H.map(x=>`<option value=${x.id} ${x.id==S.rd?'selected':''}>${fd(x.data)} · ${esc(x.turno)}${x.status==='aberto'?' (em andamento)':''}</option>`).join('')}</select></label><label>Data da produção<input value="${fd(r.dia.data)}" readonly></label><label>Turno<input value="${esc(r.dia.turno)}" readonly></label></div>
 ${v.produtos.length>1&&r.dia.meta!=null?`<p>Meta do dia definida pelo líder: <b>${r.dia.meta}</b> massas. Informe o planejado de cada produto.</p>`:''}
-${v.produtos.length?`<div class=wrap><table class=rp><tr><th>${''}<th>${v.produtos.map(p=>`<th>${esc(p.codigo)}`).join('')}</tr>${RCAMPOS.map(([k,rot,t])=>`<tr><td><b>${rot}</b>${v.produtos.map((p,i)=>`<td${v.produtos.length>1?` data-p="${esc(p.codigo)}"`:''}><input id="rf_${k}_${i}" value="${esc(t==='n'?fR(p[k]):p[k])}" ${t==='n'?'inputmode=decimal':'autocomplete=off'}${k==='ordem'?` placeholder="Bipe aqui ou digite" onkeydown="if(event.key==='Enter'){event.preventDefault();var n=document.getElementById('rf_ordem_${i+1}');n?n.focus():this.blur()}"`:''}>${k==='ordem'?`<button type=button onclick="lerCam(${i})">Ler com a câmera</button>`:''}`).join('')}</tr>`).join('')}</table></div>`:'<p>Nenhuma massa registrada neste dia.</p>'}
+${v.produtos.length?`<div class=wrap><table class=rp><tr><th>${''}<th>${v.produtos.map(p=>`<th>${esc(p.codigo)}`).join('')}</tr>${RCAMPOS.map(([k,rot,t])=>`<tr><td><b>${rot}</b>${v.produtos.map((p,i)=>`<td${v.produtos.length>1?` data-p="${esc(p.codigo)}"`:''}><input id="rf_${k}_${i}" value="${esc(t==='n'?fR(p[k]):p[k])}" ${t==='n'?'inputmode=decimal':'autocomplete=off'}${k==='ordem'?` placeholder="Bipe aqui" onkeydown="if(event.key==='Enter'){event.preventDefault();var n=document.getElementById('rf_ordem_${i+1}');n?n.focus():this.blur()}"`:''}>${k==='ordem'?`<button type=button onclick="lerCam(${i})">Ler com a câmera</button>`:''}`).join('')}</tr>`).join('')}</table></div>`:'<p>Nenhuma massa registrada neste dia.</p>'}
 <div class=f><label>Estoque de gelo (pallets)<input id=reg value="${fR(v.estoque_gelo)}" inputmode=decimal></label></div>
 <h3>Absenteísmo <small id=sab></small></h3><div id=absb></div>
 <label>Observação<textarea id=robs>${esc(v.obs)}</textarea></label>
@@ -159,6 +161,39 @@ try{if('BarcodeDetector' in window){const st=await navigator.mediaDevices.getUse
 const det=new BarcodeDetector();(async()=>{while(ativo){try{const r=await det.detect(v);if(r.length){camOk(r[0].rawValue);return}}catch(e){}await new Promise(r=>setTimeout(r,200))}})()}
 else{await carregaZX();const rd=new ZXing.BrowserMultiFormatReader();S.cam.stop=()=>{ativo=false;rd.reset()};rd.decodeFromVideoDevice(null,v,res=>{if(res&&ativo)camOk(res.getText())})}}
 catch(e){fechaCam();alert('Não foi possível abrir a câmera. Permita o uso da câmera no navegador (o site precisa estar em https) e tente de novo.')}}
+// ---- Report do dia anterior (líder do 1º turno): junta os reports dos 3 turnos ----
+const TN={'1º turno':'1º','2º turno':'2º','3º turno':'3º'};
+const GSEC=[['prod','Produção por produto',[['codigo','Código'],['turno','Turno'],['prog','Lotes programados','n'],['prod','Lotes produzidos','n'],['pacotes','Cxs/Pcts produzidos','n'],['op','Nº OP'],['ocorr','Ocorrências']],6],
+['gelo','Informações do gelo',[['turno','Turno'],['pesados','Pacotes pesados','n'],['estoque','Estoque (pallets)','n']],3],
+['abs','Absorção %',[['codigo','Código'],['turno','Turno'],['lotes','Lotes','n'],['pct','%'],['farinha','Farinha']],6],
+['falt','Faltantes (até 6 por turno)',[['turno','Turno'],['nome','Nome'],['motivo','Motivo']],18],
+['gerado','Reprocesso gerado (MR0036)',[['turno','Turno'],['kg','Qtde (kg)','n'],['pct','Qtde (pct, 7,5 kg cada)','r'],['motivo','Motivo']],4],
+['cons','Reprocesso consumido',[['codigo','Código'],['turno','Turno'],['kg','Qtde (kg)','n']],6]];
+function geralBase(g){const m={prod:[],gelo:[],abs:[],falt:[],gerado:[],cons:[]},avisos=[];
+g.turnos.forEach(t=>{const T=TN[t.turno],d=t.dados;if(!d){avisos.push(`${t.turno}: sem produção neste dia.`);m.gelo.push({turno:T,pesados:'',estoque:''});return}
+if(!d.salvo)avisos.push(`${t.turno}: o líder ainda não salvou o report; os dados vieram direto da produção.`);
+const v=repVals(d),ps=v.produtos;
+ps.forEach((p,i)=>{m.prod.push({codigo:p.codigo,turno:T,prog:p.planejado,prod:p.produzido,pacotes:p.pacotes,op:p.ordem,ocorr:i===0?v.obs:''});m.abs.push({codigo:p.codigo,turno:T,lotes:p.produzido,pct:p.absorcao,farinha:p.mescla})});
+m.gelo.push({turno:T,pesados:ps.reduce((a,p)=>a+nR(p.gelo),0),estoque:v.estoque_gelo});
+(d.colaboradores||[]).filter(c=>v.abs[c.id]).forEach(c=>m.falt.push({turno:T,nome:c.nome,motivo:v.abs[c.id]}));
+const kg=ps.reduce((a,p)=>a+nR(p.mr0036g),0);m.gerado.push({turno:T,kg,motivo:kg>0?'':'N/ GEROU REPROCESSO'});
+[['MR0036','mr0036'],['MR0001','mr0001'],['MR0027','mr0027']].forEach(([cod,k])=>{const s=ps.reduce((a,p)=>a+nR(p[k]),0);if(s>0)m.cons.push({codigo:cod,turno:T,kg:s})})});
+return{m,avisos}}
+function drawGeral(){const {m,avisos,salvo}=S.RG;
+const sec=([k,tit,cols,cap])=>`<h3>${tit}${k!=='falt'&&m[k].length>cap?` <small class=aviso>${m[k].length} linhas; o modelo comporta ${cap}, as extras não vão para o Excel</small>`:''}</h3><div class=wrap><table><tr>${cols.map(c=>`<th>${c[1]}`).join('')}<th></tr>${m[k].map((row,i)=>`<tr>${cols.map(c=>c[2]==='r'?`<td id="gp_${i}">${fR(Math.round(nR(row.kg)/7.5*10)/10)}`:`<td><input id="g_${k}_${i}_${c[0]}" value="${esc(row[c[0]]==null?'':c[2]==='n'&&row[c[0]]!==''?fR(row[c[0]]):row[c[0]])}" ${c[2]==='n'?'inputmode=decimal':'autocomplete=off'}${k==='gerado'&&c[0]==='kg'?` oninput="document.getElementById('gp_${i}').textContent=fR(Math.round(nR(this.value)/7.5*10)/10)"`:''}>`).join('')}<td><button onclick="gDel('${k}',${i})">Remover</button></tr>`).join('')||`<tr><td colspan=${cols.length+1}>Sem linhas.</tr>`}</table></div><div class=foot><button onclick="gAdd('${k}')">Adicionar linha</button></div>`;
+A.innerHTML=head()+nav()+`<main class=rep><h2>Report do dia anterior</h2><div class=f><label>Dia da produção<input type=date value="${S.rgd}" onchange="S.rgd=this.value;R()"></label></div>
+${salvo?'<p>Mostrando o report geral que você já salvou para este dia. Use <b>Recalcular</b> para voltar aos dados dos líderes.</p>':''}${avisos.map(a=>`<p class=aviso>${esc(a)}</p>`).join('')}
+${GSEC.map(sec).join('')}
+<div class=foot><button class=big onclick=gSalva()>Salvar</button><button class=big onclick=gBaixa()>Baixar Excel</button><button onclick=gLimpa()>Recalcular (descartar edições)</button></div></main>`}
+function gSync(){GSEC.forEach(([k,,cols])=>{S.RG.m[k]=S.RG.m[k].map((row,i)=>{const o={};cols.filter(c=>c[2]!=='r').forEach(c=>{const e=document.getElementById(`g_${k}_${i}_${c[0]}`),x=e?e.value.trim():row[c[0]];o[c[0]]=c[2]==='n'?(x===''?'':nR(x)):x});return o})})}
+function gAdd(k){gSync();S.RG.m[k].push({});drawGeral()}
+function gDel(k,i){gSync();S.RG.m[k].splice(i,1);drawGeral()}
+async function gSalva(q){gSync();await rpc('report_geral_salvar',{p_data:S.rgd,p_dados:{m:S.RG.m}});if(!q)alert('Report do dia anterior salvo.')}
+async function gLimpa(){if(!confirm('Descartar as edições e recalcular com os reports dos líderes?'))return;await rpc('report_geral_limpar',{p_data:S.rgd});R()}
+async function gBaixa(){gSync();const m=S.RG.m,ex=GSEC.filter(([k,,,cap])=>k!=='falt'&&m[k].length>cap).map(s=>s[1]);['1º','2º','3º'].forEach(t=>{if(m.falt.filter(f=>f.turno===t).length>6)ex.push('Faltantes '+t)});
+if(ex.length&&!confirm('Há mais linhas do que o modelo comporta em: '+ex.join(', ')+'. As linhas extras não vão para o Excel. Baixar mesmo assim?'))return;
+await gSalva(1);let x;try{x=await fetch('/api/report_geral',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:S.rgd,m})})}catch(e){return alert('Não foi possível gerar o Excel.')}
+if(!x.ok)return alert('Não foi possível gerar o Excel: '+await x.text());const b=await x.blob(),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='Report_do_dia_anterior_'+S.rgd+'.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
 async function addc(){await rpc('admin_colaborador',{p_nome:document.getElementById('cn').value,p_turno:document.getElementById('ct').value});R()}
 async function delc(id){if(confirm('Excluir este colaborador da lista?')){await rpc('admin_excluir_colaborador',{p_id:id});R()}}
 async function addmot(){await rpc('admin_motivo_abs',{p_nome:document.getElementById('nmo').value});R()}
