@@ -5,6 +5,9 @@
     },
     "api/report_geral.py": {
       "includeFiles": "api/_modelo_report.xlsx"
+    },
+    "api/pallets.py": {
+      "includeFiles": "api/_modelo_pallets.xlsx"
     }
   }
 }
