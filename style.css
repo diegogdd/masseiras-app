@@ -54,3 +54,4 @@ table{width:100%;border-collapse:collapse;background:var(--card)}th,td{padding:1
 
 .pth{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px 20px;margin-bottom:6px}.pth h2{margin:0}
 .ptot{text-align:center;font-size:14px;line-height:1.25;background:var(--card);border:1px solid var(--run);border-radius:8px;padding:5px 10px;margin-left:auto}.ptot b{font-weight:700}.ptot div b{font-size:16px}
+.adm h3.gr{margin:26px 0 10px;color:var(--mut);font-size:20px;text-transform:uppercase;letter-spacing:.04em}.adm .grid button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:24px;min-height:100px}.adm .grid button small{font-size:16px;font-weight:400;color:var(--mut)}.adm h2+h3.gr{margin-top:10px}
