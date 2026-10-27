@@ -31,8 +31,6 @@ const V={
 login(){A.innerHTML=`<main class=c><h1>Controle de Bateladas JBT</h1><h2>${NOMES[PERFIL]}</h2>${['admin','farinha'].includes(PERFIL)?'':`<label>Turno<select id=t>${TURNOS.map(t=>`<option>${t}</option>`).join('')}</select></label>`}<label>Senha<input id=p type=password autocomplete=off></label><button class=big onclick=ent()>Entrar</button><p class=er id=er></p></main>`},
 async home(){await load();const fc=S.E.fechando;A.innerHTML=head()+nav()+(fc&&!S.E.dia?`<div class=ctr><p><b>Produção deste turno encerrada.</b><br>Aguardando o próximo turno finalizar ${fc.batendo} massa${fc.batendo==1?'':'s'} que ainda ${fc.batendo==1?'está':'estão'} batendo.</p></div>`:`<div class=ctr><button class=big onclick=inicia()>${S.E.dia?'CONTINUAR PRODUÇÃO DE HOJE':'INICIAR PRODUÇÃO DE HOJE'}</button></div>`)},
 async prod(){await load();A.innerHTML=head()+`<main><h2>Escolha o produto</h2><div class=grid>${S.E.produtos.map(p=>`<button onclick="pick(${p.id})">${esc(p.nome)}</button>`).join('')}</div>${S.E.dia?`<div class=foot><button onclick="go('main')">Voltar</button></div>`:''}</main>`},
-async lote(){if(!S.pk)return go('prod');await load();const p=S.E.produtos.find(x=>x.id===S.pk);if(!p){S.pk=null;return go('prod')}const pr=(S.LP||[]).find(x=>x.produto_id===S.pk),n=pr?pr.proximo:1;
-A.innerHTML=head()+`<main><h2>${esc(p.nome)}</h2><p>${n>1?`Último lote deste produto hoje: <b>${n-1}</b>. Sugestão: continuar no lote <b>${n}</b>.`:'Este produto ainda não teve lote hoje. Sugestão: começar no lote <b>1</b>.'}</p><label>Iniciar no lote<input id=lt type=number min=1 step=1 inputmode=numeric value="${n}"></label><div class=foot><button class=big onclick=confirmaLote()>${S.E.dia?'Trocar para este produto':'Iniciar produção'}</button><button onclick="S.pk=null;go('prod')">Voltar</button></div><p class=er id=er></p></main>`},
 async main(){await load();if(!S.E.dia)return go('home');const ant=S.E.anteriores||[],act=S.E.bateladas.filter(b=>b.status==='Batendo').sort((a,b)=>a.diosna-b.diosna),f=done(),livres=Math.max(0,2-(S.E.diosnas_ocupadas?S.E.diosnas_ocupadas.length:act.length));
 A.innerHTML=head()+nav()+`<main>${metaBar()}<h2>Bateladas</h2>${[0,1].map(i=>row(act[i],i-act.length>=livres)).join('')}${ant.length?`<h3>Massas do turno anterior ainda batendo</h3>${ant.map(rowA).join('')}`:''}<div class=foot><button onclick="go('prod')">Trocar de produto</button><button onclick=fecha()>Encerrar meu turno</button></div><h2>Finalizadas hoje</h2>${tabela(f.slice().reverse())}</main>`},
 wiz(){const w=S.w,st=w.step;let h='';
@@ -208,15 +206,14 @@ if(!x.ok)return alert('Não foi possível gerar o Excel: '+await x.text());const
 const LETRAS=[['C','Coopavel'],['B','Bunge'],['R','Realta'],['F','Frísia'],['RO','Roseflor']];
 const hhmm=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 function drawPallet(){const P=S.PL,f=S.PF=S.PF||{},u=P.ultimo||{};
-f.produto=f.produto??u.produto_id??(P.produtos[0]||{}).id;f.letra=f.letra??u.letra??'C';f.tipo=f.tipo||'PA';f.resp=f.resp??u.responsavel??'';const LT=String(f.letra||'C').split('/');
+f.produto=f.produto??u.produto_id??(P.produtos[0]||{}).id;f.letra=f.letra??u.letra??'C';f.tipo=f.tipo||'PA';f.resp=f.resp??u.responsavel??'';f.letras=f.letras||String(f.letra||'C').split('/').filter(Boolean).slice(0,2);
 A.innerHTML=head()+`<nav><button onclick="S.PLmsg='';go('pallet')">Atualizar</button><button onclick="sair()">Sair</button></nav><main><h2>Entrega de pallets à expedição</h2>
 <p>Dia de produção <b>${fd(P.data)}</b>.</p>${S.PLmsg?`<div class=balao>${esc(S.PLmsg)}</div>`:''}${S.PE&&S.PE.encerrado?`<div class=balao>Turno encerrado às ${hm(S.PE.em)}. Se registrar outro pallet, o turno volta a ficar aberto para o líder.</div>`:''}
 <div class=f><label>Produto<select id=pp onchange="pProd(this.value)">${P.produtos.map(p=>`<option value=${p.id} ${p.id===f.produto?'selected':''}>${esc((p.codigo?p.codigo+' - ':'')+p.nome)}</option>`).join('')}</select></label>
 <label>Lote do pallet<input id=pn type=number min=1 step=1 inputmode=numeric value="${pNx(f.produto)}"><small id=pnh>${pDica(pNx(f.produto))}</small></label>
 <label>Horário<input id=ph type=time value="${hhmm()}"></label>
 <label>Quantidade (pct)<input id=pq type=number value="150" inputmode=numeric></label>
-<label>Letra na impressão<select id=pl>${LETRAS.map(([l,n])=>`<option value="${l}" ${l===LT[0]?'selected':''}>${l} - ${n}</option>`).join('')}</select></label>
-<label>2ª letra (mescla, opcional)<select id=pl2><option value="">Nenhuma</option>${LETRAS.map(([l,n])=>`<option value="${l}" ${l===LT[1]?'selected':''}>${l} - ${n}</option>`).join('')}</select></label>
+<div class=lsel><span>Letra na impressão (até 2, para mescla)</span><details id=plx><summary id=pls>${letrasTxt(f.letras)}</summary><div class=lop id=plo>${letrasOpts(f.letras)}</div></details></div>
 <label>Responsável (embalamento)<input id=pr value="${esc(f.resp)}" list=prl autocomplete=off><datalist id=prl>${P.responsaveis.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
 <label>Observação (opcional)<input id=po autocomplete=off></label></div>
 <div class="grid tipo">${['PA','Reprocesso','Retrabalho'].map(t=>`<button data-t="${t}" class="${f.tipo===t?'sel':''}" onclick="pTipo('${t}')">${t.toUpperCase()}</button>`).join('')}</div>
@@ -226,8 +223,11 @@ function pNx(id){const P=S.PL,x=(P.proximos||[]).find(q=>q.produto_id===id);retu
 function pDica(n){return n>1?'Último lote deste produto hoje: '+(n-1):'Primeiro pallet deste produto hoje'}
 function pProd(v){const id=parseInt(v),n=pNx(id);S.PF.produto=id;document.getElementById('pn').value=n;document.getElementById('pnh').textContent=pDica(n)}
 function pTipo(t){S.PF.tipo=t;document.querySelectorAll('.tipo button').forEach(b=>b.classList.toggle('sel',b.dataset.t===t))}
-function letraSel(){const a=document.getElementById('pl').value,b=document.getElementById('pl2').value;return b&&b!==a?a+'/'+b:a}
-async function pReg(){const g=i=>document.getElementById(i),f=S.PF,resp=g('pr').value.trim();if(!resp)return alert('Informe o responsável do embalamento.');
+const letrasTxt=a=>a.map(l=>{const x=LETRAS.find(q=>q[0]===l);return x?l+' - '+x[1]:l}).join(' + ')||'Escolha a letra';
+const letrasOpts=a=>LETRAS.map(([l,n])=>`<button type=button class="${a.includes(l)?'sel':''}" ${!a.includes(l)&&a.length>=2?'disabled':''} onclick="pLetra('${l}')">${a.includes(l)?'✓ ':''}${l} - ${n}</button>`).join('')+`<button type=button onclick="document.getElementById('plx').open=false">Pronto</button>`;
+function pLetra(l){const a=S.PF.letras,i=a.indexOf(l);if(i<0){if(a.length<2)a.push(l)}else a.splice(i,1);const t=document.getElementById('pls'),o=document.getElementById('plo');if(t)t.textContent=letrasTxt(a);if(o)o.innerHTML=letrasOpts(a)}
+function letraSel(){return S.PF.letras.join('/')}
+async function pReg(){const g=i=>document.getElementById(i),f=S.PF,resp=g('pr').value.trim();if(!resp)return alert('Informe o responsável do embalamento.');if(!S.PF.letras.length)return alert('Escolha a letra na impressão.');
 const pid=parseInt(g('pp').value),lote=parseInt(g('pn').value),n0=pNx(pid),v2=!!S.PL.proximos;if(!(lote>=1))return alert('Informe o lote do pallet.');
 if(v2&&lote<n0&&!confirm('Este produto já chegou ao lote '+(n0-1)+' hoje. Registrar o lote '+lote+' mesmo assim?'))return;
 const a={p_produto:pid,p_horario:g('ph').value,p_qtd:parseInt(g('pq').value)||0,p_letra:letraSel(),p_resp:resp,p_tipo:f.tipo,p_obs:g('po').value};if(v2)a.p_lote=lote;
@@ -270,10 +270,7 @@ A.innerHTML=head()+nav()+`<main><h2>Produção do Dia</h2><p><b>Turno encerrado.
 function verDia(id){S.hid=id;go('hdia')}
 function sair(){S.token=null;S.E=null;go('login')}
 async function inicia(){S.mode=S.E.dia?'':'iniciar';go(S.E.dia?'main':'prod')}
-async function pick(id){S.LP=await rpcQ('lotes_proximos');if(!S.LP)return alert('Não foi possível carregar os lotes. O banco ainda precisa da atualização migracao-lote-por-produto.sql (avise o administrador).');S.pk=id;go('lote')}
-async function confirmaLote(){const v=parseInt(document.getElementById('lt').value),pr=(S.LP||[]).find(x=>x.produto_id===S.pk),n=pr?pr.proximo:1;if(!(v>=1))return document.getElementById('er').textContent='Informe o lote inicial (1 ou mais).';
-if(v<n&&!confirm('Este produto já chegou ao lote '+(n-1)+' hoje. Começar do lote '+v+' mesmo assim?'))return;
-await rpc(S.E.dia?'trocar_produto':'iniciar_dia',{p_produto:S.pk,p_lote:v});S.pk=null;go('main')}
+async function pick(id){await rpc(S.E.dia?'trocar_produto':'iniciar_dia',{p_produto:id});go('main')}
 function ini(){let o='';try{o=localStorage.getItem('mq_op')||''}catch(e){}S.w={ini:new Date().toISOString(),step:0,rep:[],op:o};go('wiz')}
 function nx(){S.w.step++;R()}
 function tg(x){const r=S.w.rep,i=r.indexOf(x);i<0?r.push(x):r.splice(i,1);R()}
@@ -307,11 +304,9 @@ const DK='mq_demo_db',DP=['Pão Francês 6H','Pão Francês 90g','Pão Francês 
 const DB=()=>{try{return JSON.parse(localStorage.getItem(DK))||{dia:null,b:[],hist:[],meta:null,seq:1}}catch(e){return {dia:null,b:[],hist:[],meta:null,seq:1}}};
 function demoRpc(fn,a){const D=DB(),sv=()=>{try{localStorage.setItem(DK,JSON.stringify(D))}catch(e){}},err=m=>{alert(m);throw new Error(m)},nome=id=>DP[id-1],f=D.b.filter(b=>b.status==='Finalizada');D.ant=D.ant||[];
 if(fn==='estado')return{produtos:DP.map((n,i)=>({id:i+1,nome:n,receita:'',batimento:i===0?[{tipo:'Amassar cf. tempo',tempo:130,tina:30,ferramenta:40},{tipo:'Amassar cf. tempo',tempo:340,tina:55,ferramenta:40},{tipo:'Amassar cf. tempo',tempo:180,tina:40,ferramenta:35},{tipo:'Esvaziamento',tempo:50,tina:30,ferramenta:40}]:[]})),meta:D.meta,dia:D.dia?{id:1,turno:'Treinamento',contador:D.dia.contador,produto_id:D.dia.pid,produto:nome(D.dia.pid)}:null,bateladas:D.b.map(b=>Object.assign({},b,{produto:nome(b.pid)})),anteriores:D.ant.map(b=>Object.assign({},b,{produto:nome(b.pid),turno:'Turno anterior'})),diosnas_ocupadas:D.b.concat(D.ant).filter(b=>b.status==='Batendo').map(b=>b.diosna),fechando:null};
-D.lp=D.lp||{};
-if(fn==='lotes_proximos')return DP.map((n,i)=>({produto_id:i+1,proximo:(D.lp[i+1]||0)+1}));
-if(fn==='iniciar_dia'){if(!D.dia){if(a.p_lote)D.lp[a.p_produto]=a.p_lote-1;D.dia={pid:a.p_produto,contador:D.lp[a.p_produto]||0}}}
-else if(fn==='trocar_produto'){if(a.p_lote)D.lp[a.p_produto]=a.p_lote-1;D.dia.pid=a.p_produto;D.dia.contador=D.lp[a.p_produto]||0}
-else if(fn==='iniciar_batelada'){if(D.b.concat(D.ant).some(b=>b.status==='Batendo'&&b.diosna===a.p_diosna))err('Esta Diosna já está batendo');D.lp[D.dia.pid]=(D.lp[D.dia.pid]||0)+1;D.dia.contador=D.lp[D.dia.pid];D.b.push({id:D.seq++,lote:D.dia.contador,pid:D.dia.pid,inicio:a.p_inicio,fim:null,rep_linha:a.p_linha,rep_congelado:a.p_cong,diosna:a.p_diosna,farinha:mescDemo(D.b.length+1).farinha,temperatura:null,operador:a.p_op||null,status:'Batendo'})}
+if(fn==='iniciar_dia'){if(!D.dia)D.dia={pid:a.p_produto,contador:0}}
+else if(fn==='trocar_produto'){D.dia.pid=a.p_produto;D.dia.contador=0}
+else if(fn==='iniciar_batelada'){if(D.b.concat(D.ant).some(b=>b.status==='Batendo'&&b.diosna===a.p_diosna))err('Esta Diosna já está batendo');D.dia.contador++;D.b.push({id:D.seq++,lote:D.dia.contador,pid:D.dia.pid,inicio:a.p_inicio,fim:null,rep_linha:a.p_linha,rep_congelado:a.p_cong,diosna:a.p_diosna,farinha:mescDemo(D.b.length+1).farinha,temperatura:null,operador:a.p_op||null,status:'Batendo'})}
 else if(fn==='finalizar_batelada'){const x=D.b.find(y=>y.id===a.p_id)||D.ant.find(y=>y.id===a.p_id);Object.assign(x,{fim:a.p_fim,temperatura:a.p_temp,status:'Finalizada'});if(x.hid){const h=D.hist.find(y=>y.id===x.hid);if(h){const n=nome(x.pid);h.total++;h.por_produto=h.por_produto||{};h.por_produto[n]=(h.por_produto[n]||0)+1}D.ant=D.ant.filter(y=>y.id!==x.id)}}
 else if(fn==='encerrar_dia'){const p={},hid=D.hist.length+1;f.forEach(b=>{const n=nome(b.pid);p[n]=(p[n]||0)+1});D.ant=D.ant.concat(D.b.filter(b=>b.status==='Batendo').map(b=>Object.assign({},b,{hid})));D.hist.push({id:hid,data:new Date().toISOString().slice(0,10),turno:'Treinamento',meta:D.meta,status:'encerrado',total:f.length,por_produto:f.length?p:null});D.dia=null;D.b=[];D.meta=null}
 else if(fn==='definir_meta'){D.meta=a.p_meta}
