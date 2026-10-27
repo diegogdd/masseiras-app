@@ -266,11 +266,11 @@ function row(b,bloq){if(b)return `<div class="row on"><div><small>Lote</small><b
 return `<div class=row><div><small>Lote</small><b>${S.E.dia.contador+1}</b></div><div class=st>${bloq?'Aguardando fim do batimento':'Diosna liberada'}</div><button class=big onclick=ini() ${bloq?'disabled style="opacity:.4;cursor:not-allowed"':''}>Iniciar nova batelada</button></div>`}
 function tabela(l,all,nm){return `<div class=wrap><table><tr><th>Produto<th>Lote<th>Início<th>Fim<th>Reprocesso<th>Diosna${nm?'':'<th>Mescla de farinha'}<th>Temperatura<th>Operador${all?'<th>Status':''}</tr>${l.length?l.map(b=>`<tr><td>${esc(b.produto)}<td>${b.lote}<td>${hm(b.inicio)}<td>${hm(b.fim)}<td>${rp(b)}<td>${b.diosna}${nm?'':`<td class=mesc>${mescT(b)}`}<td>${b.temperatura==null?'—':String(b.temperatura).replace('.',',')+'ºC'}<td>${esc(b.operador||'—')}${all?`<td>${b.status}`:''}</tr>`).join(''):'<tr><td colspan=${nm?9:10}>Nenhuma batelada ainda.</tr>'}</table></div>`}
 async function ent(){const pf=PERFIL,{data,error}=await sb.rpc('login',{p_perfil:pf,p_turno:['admin','farinha'].includes(pf)?null:document.getElementById('t').value,p_senha:document.getElementById('p').value});
-if(error)return document.getElementById('er').textContent=error.message;S.token=data.token;S.perfil=data.perfil;S.turno=data.turno;S.nome=data.nome;S.E=null;go(home0())}
+if(error)return document.getElementById('er').textContent=error.message;S.token=data.token;S.perfil=data.perfil;S.turno=data.turno;S.nome=data.nome;S.E=null;S.PLmsg='';S.PF=null;S.PL=null;S.PE=null;go(home0())}
 async function resumoFechando(){const r=await rpc('historico_dia',{p_dia:S.E.fechando.id}),m=sum(r.bateladas.filter(b=>b.status==='Finalizada')),nb=r.bateladas.filter(b=>b.status==='Batendo').length;
 A.innerHTML=head()+nav()+`<main><h2>Produção do Dia</h2><p><b>Turno encerrado.</b> ${nb} massa${nb==1?'':'s'} ainda ${nb==1?'está':'estão'} batendo, aguardando o próximo turno finalizar. O total pode aumentar.</p>${metaHtml(r.dia.meta,m.t,'Meta não definida neste dia')}${stats(m)}${S.perfil==='lider'?`<h3>Bateladas</h3>${tabela(r.bateladas.slice().reverse(),1)}`:''}</main>`}
 function verDia(id){S.hid=id;go('hdia')}
-function sair(){S.token=null;S.E=null;go('login')}
+function sair(){S.token=null;S.E=null;S.PLmsg='';S.PF=null;S.PL=null;S.PE=null;go('login')}
 async function inicia(){S.mode=S.E.dia?'':'iniciar';go(S.E.dia?'main':'prod')}
 async function pick(id){await rpc(S.E.dia?'trocar_produto':'iniciar_dia',{p_produto:id});go('main')}
 function ini(){let o='';try{o=localStorage.getItem('mq_op')||''}catch(e){}S.w={ini:new Date().toISOString(),step:0,rep:[],op:o};go('wiz')}
