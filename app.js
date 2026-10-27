@@ -210,17 +210,17 @@ f.produto=f.produto??u.produto_id??(P.produtos[0]||{}).id;f.letra=f.letra??u.let
 A.innerHTML=head()+`<nav><button onclick="S.PLmsg='';go('pallet')">Atualizar</button><button onclick="sair()">Sair</button></nav><main><h2>Entrega de pallets à expedição</h2>
 <p>Dia de produção <b>${fd(P.data)}</b>.</p>${S.PLmsg?`<div class=balao>${esc(S.PLmsg)}</div>`:''}${S.PE&&S.PE.encerrado?`<div class=balao>Turno encerrado às ${hm(S.PE.em)}. Se registrar outro pallet, o turno volta a ficar aberto para o líder.</div>`:''}
 <div class=f><label>Produto<select id=pp onchange="pProd(this.value)">${P.produtos.map(p=>`<option value=${p.id} ${p.id===f.produto?'selected':''}>${esc((p.codigo?p.codigo+' - ':'')+p.nome)}</option>`).join('')}</select></label>
-<label>Lote do pallet<input id=pn type=number min=1 step=1 inputmode=numeric value="${pNx(f.produto)}"><small id=pnh>${pDica(pNx(f.produto))}</small></label>
+<label><span>Lote do pallet <small id=pnh>${pDica(pNx(f.produto))}</small></span><input id=pn type=number min=1 step=1 inputmode=numeric value="${pNx(f.produto)}"></label>
 <label>Horário<input id=ph type=time value="${hhmm()}"></label>
 <label>Quantidade (pct)<input id=pq type=number value="150" inputmode=numeric></label>
 <div class=lsel><span>Letra na impressão (até 2, para mescla)</span><details id=plx><summary id=pls>${letrasTxt(f.letras)}</summary><div class=lop id=plo>${letrasOpts(f.letras)}</div></details></div>
 <label>Responsável (embalamento)<input id=pr value="${esc(f.resp)}" list=prl autocomplete=off><datalist id=prl>${P.responsaveis.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
 <label>Observação (opcional)<input id=po autocomplete=off></label></div>
 <div class="grid tipo">${['PA','Reprocesso','Retrabalho'].map(t=>`<button data-t="${t}" class="${f.tipo===t?'sel':''}" onclick="pTipo('${t}')">${t.toUpperCase()}</button>`).join('')}</div>
-<div class=foot><button class=big onclick=pReg()>Registrar pallet</button><button onclick=pDesfaz()>Desfazer o último pallet do turno</button>${S.PE&&S.PE.encerrado?'':'<button onclick=pEncerra()>Encerrar meu turno</button>'}</div>
+<div class=foot><button class="big reg" onclick=pReg()>Registrar pallet</button><button onclick=pDesfaz()>Desfazer o último pallet do turno</button>${S.PE&&S.PE.encerrado?'':'<button onclick=pEncerra()>Encerrar meu turno</button>'}</div>
 <h3>Pallets do dia</h3><div class=wrap><table><tr><th>Lote<th>Horário<th>Turno<th>Produto<th>Qtd<th>Letra<th>Responsável<th>Tipo</tr>${P.lista.map(x=>`<tr><td><b>${x.lote}</b><td>${esc(x.horario)}<td>${esc((x.turno||'').slice(0,2))}<td>${esc(x.codigo||x.produto||'')}<td>${x.quantidade}<td>${esc(x.letra)}<td>${esc(x.responsavel||'—')}<td>${esc(x.tipo)}${x.obs?' · '+esc(x.obs):''}</tr>`).join('')||'<tr><td colspan=8>Nenhum pallet registrado neste dia.</tr>'}</table></div></main>`}
 function pNx(id){const P=S.PL,x=(P.proximos||[]).find(q=>q.produto_id===id);return x?x.proximo:P.proximo}
-function pDica(n){return n>1?'Último lote deste produto hoje: '+(n-1):'Primeiro pallet deste produto hoje'}
+function pDica(n){return n>1?'(último: '+(n-1)+')':'(1º do dia)'}
 function pProd(v){const id=parseInt(v),n=pNx(id);S.PF.produto=id;document.getElementById('pn').value=n;document.getElementById('pnh').textContent=pDica(n)}
 function pTipo(t){S.PF.tipo=t;document.querySelectorAll('.tipo button').forEach(b=>b.classList.toggle('sel',b.dataset.t===t))}
 const letrasTxt=a=>a.map(l=>{const x=LETRAS.find(q=>q[0]===l);return x?l+' - '+x[1]:l}).join(' + ')||'Escolha a letra';

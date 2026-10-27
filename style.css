@@ -47,3 +47,7 @@ table{width:100%;border-collapse:collapse;background:var(--card)}th,td{padding:1
 .lsel summary::-webkit-details-marker{display:none}.lsel summary::after{content:'▾';float:right}
 .lop{position:absolute;z-index:5;left:0;right:0;top:100%;margin-top:4px;background:var(--card);border:2px solid var(--bd);border-radius:10px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.18)}
 .lop button{display:block;width:100%;min-height:0;margin:0;text-align:left;border:0;border-radius:0;padding:14px;font-size:inherit}.lop button:disabled{opacity:.4}
+
+.f label small{font-weight:400;color:var(--mut)}
+.grid.tipo{gap:10px}.grid.tipo button{min-height:56px;font-size:18px;padding:8px}
+.foot .reg{flex:1 1 100%;min-height:104px;font-size:34px}
