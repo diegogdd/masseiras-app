@@ -1,6 +1,7 @@
 // Painel do Gestor: gráficos e análises da produção. Carregado só em /gestor, antes do app.js.
 // Usa as funções do app.js (S, A, rpc, rpcQ, esc, fd, head, sair) só na hora de executar.
 (function(){
+const MINI='2026-10-05'; // massas contam a partir daqui
 const INI='2026-10-28'; // pacotes só contam a partir daqui (antes não havia embalamento no sistema)
 const TUR=['1º turno','2º turno','3º turno'],COR=['var(--t1)','var(--t2)','var(--t3)'];
 const DOW=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],DS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -19,9 +20,9 @@ function porData(dias,hoje){const lim=add(hoje,-1),m={};
     if(d.status!=='encerrado'&&d.data>=lim)o.inc=true});
   return Object.values(m).sort((a,b)=>a.data<b.data?-1:1)}
 
-function calc(G,per){const hoje=G.hoje,ini=per?add(hoje,-(per-1)):'0000-00-00',lim=add(hoje,-1);
-  const todos=porData(G.dias,hoje),incSet=new Set(todos.filter(x=>x.inc).map(x=>x.data));
-  const rows=G.dias.filter(d=>d.data>=ini),dd=porData(rows,hoje),ok=dd.filter(x=>!x.inc&&x.tot>0);
+function calc(G,per){const hoje=G.hoje,ini0=per?add(hoje,-(per-1)):MINI,ini=ini0>MINI?ini0:MINI,lim=add(hoje,-1),GD=G.dias.filter(d=>d.data>=MINI);
+  const todos=porData(GD,hoje),incSet=new Set(todos.filter(x=>x.inc).map(x=>x.data));
+  const rows=GD.filter(d=>d.data>=ini),dd=porData(rows,hoje),ok=dd.filter(x=>!x.inc&&x.tot>0);
   const media=ok.length?sm(ok,x=>x.tot)/ok.length:0,ord=ok.slice().sort((a,b)=>b.tot-a.tot),k=Math.max(1,Math.min(5,Math.floor(ok.length/2)));
   const top=ok.length>=2?ord.slice(0,k):ord.slice(0,1),bot=ok.length>=2?ord.slice().reverse().slice(0,k):[];
   const sem=DOW.map((nome,i)=>{const l=ok.filter(x=>dow(x.data)===i);return{i,nome,qtd:l.length,media:l.length?sm(l,x=>x.tot)/l.length:0}}),sc=sem.filter(x=>x.qtd>0);
@@ -54,7 +55,7 @@ function rank(l,tipo,media,pac){const mx=Math.max(1,...l.map(x=>x.tot));
 
 // ---------- tela ----------
 function draw(){const G=S.G;if(!G)return;const per=S.gp==null?30:S.gp,c=calc(G,per),P=calcPac(S.GP,c),hoje=G.hoje;
-  const dd=c.dd,vazio=!G.dias.length;
+  const dd=c.dd,vazio=!G.dias.some(d=>d.data>=MINI);
   const chartDias=cols(dd.map(x=>({l:dm(x.data),seg:x.t.map((v,i)=>({v,c:COR[i]})),cls:x.inc?'parc':'',tip:`${dl(x.data)}: ${x.tot} massas${x.inc?' (dia em andamento)':''}`})));
   const chartSem=cols(c.sem.map(s=>({l:DS[s.i],seg:[{v:s.media,c:'var(--pri)'}],cls:c.sbest&&s.i===c.sbest.i?'best':c.sworst&&s.i===c.sworst.i?'worst':'',tip:`${s.nome}: média de ${n(s.media,1)} massas em ${s.qtd} dia(s)`})),{w:56,h:150});
   const chartHora=cols(c.hr.map(x=>({l:String(x.h).padStart(2,'0')+'h',seg:x.t.map((v,i)=>({v,c:COR[i]})),tip:`${String(x.h).padStart(2,'0')}h: ${sm(x.t)} massas iniciadas`})),{w:30,h:140});
