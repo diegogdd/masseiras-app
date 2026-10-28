@@ -1,7 +1,7 @@
 // Painel do Gestor: gráficos e análises da produção. Carregado só em /gestor, antes do app.js.
 // Usa as funções do app.js (S, A, rpc, rpcQ, esc, fd, head, sair) só na hora de executar.
 (function(){
-const MINI='2026-10-05'; // massas contam a partir daqui
+const MINI='2026-10-02'; // massas contam a partir daqui
 const INI='2026-10-28'; // pacotes só contam a partir daqui (antes não havia embalamento no sistema)
 const TUR=['1º turno','2º turno','3º turno'],COR=['var(--t1)','var(--t2)','var(--t3)'];
 const DOW=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'],DS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
