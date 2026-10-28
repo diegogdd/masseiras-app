@@ -18,6 +18,7 @@ Em vercel.com, **Add New > Project**, importe o repositório e clique em **Deplo
 - `seusite.vercel.app/operador` para o tablet da linha (deixe este endereço salvo/adicionado à tela inicial)
 - `seusite.vercel.app/lider` para os líderes
 - `seusite.vercel.app/admin` para o administrador
+- `seusite.vercel.app/gestor` para o gestor (gráficos e análises da produção)
 - `seusite.vercel.app/farinha` para o operador de ponte rolante (Abastecimento Farinha)
 - `seusite.vercel.app/treinamento` para treinamentos (dados fictícios, só no navegador)
 
@@ -57,3 +58,10 @@ A geração roda em uma função da Vercel (`api/excel.py`); o arquivo `requirem
 - **Salvar / Baixar Excel / Copiar resumo / Recalcular.** O Excel é gerado pela função `api/report.py`.
 - Se o banco já existe, rode `supabase/migracao-report.sql` depois `supabase/migracao-report-v2.sql` e por fim `supabase/migracao-report-v3.sql` no SQL Editor.
 
+
+## Gestor (gráficos e análises)
+- Acesso **Gestor** no menu inicial (`/gestor`), só com senha (sem turno). Senha inicial: `admin2580`.
+- Mostra, por período (7, 30, 90 dias ou tudo): massas por dia (empilhadas por turno), **dias mais e menos produtivos** (com % da meta), média por dia da semana, comparação dos turnos (massas/hora, temperatura, meta atingida, reprocesso), massas por produto, horário de pico e um resumo escrito da análise.
+- O dia em andamento aparece nos gráficos (mais claro), mas só entra nos rankings e médias depois de encerrado pelos 3 turnos.
+- **Pacotes** contam só a partir de **28/10/2026** (antes o embalamento não estava no sistema). Eles vêm dos pallets da transpaleteira, com ranking de melhor e pior dia, média diária, pacotes por produto e pacotes por massa.
+- Instalação: rode `supabase/migracao-gestor.sql` no SQL Editor do Supabase (não mexe no login nem nos usuários existentes). Para trocar a senha, use o `update` que está comentado no começo do arquivo.
