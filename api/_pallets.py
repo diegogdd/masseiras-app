@@ -5,6 +5,7 @@ import os
 import openpyxl
 from openpyxl.drawing.image import Image
 from openpyxl.styles import Alignment, Font
+from openpyxl.worksheet.pagebreak import Break
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 # (linha inicial, quantidade de linhas) dos dois blocos da ficha: lotes 1-34 / 35-68 e 69-99 / 100-130
@@ -12,6 +13,23 @@ BLOCOS = ((12, 34), (48, 31))
 ESQ = dict(turno='B', hora='C', lote='D', qtd='E', letra='F', resp='H', obs='I')
 DIR = dict(turno='J', hora='K', lote='L', qtd='M', letra='N', resp='P', obs='Q')
 CAPACIDADE = 130
+ESCALA = 50  # % de impressão: cada metade da ficha (linhas 1-45 e 46-81) cabe inteira em uma folha A4 paisagem
+
+
+def _imprimir(ws):
+    """Configura a impressão: 2 folhas por produto, quebrando entre os dois blocos da ficha.
+    Sem 'ajustar à página' (o Excel ignora quebras manuais nesse modo e cortava a tabela no meio)."""
+    ws.sheet_properties.pageSetUpPr = None
+    ws.page_setup.orientation = 'landscape'
+    ws.page_setup.paperSize = 9
+    ws.page_setup.scale = ESCALA
+    ws.page_setup.fitToWidth = None
+    ws.page_setup.fitToHeight = None
+    ws.print_area = 'A1:R81'
+    ws.print_title_rows = '2:10'
+    ws.print_options.horizontalCentered = True
+    ws.row_breaks.brk = []
+    ws.row_breaks.append(Break(id=45))
 
 
 def _pos(i):
@@ -71,7 +89,7 @@ def gerar_pallets(d):
         ws = base if k == 0 else wb.copy_worksheet(base)
         if k and raw:
             im = Image(io.BytesIO(raw)); im.anchor = copy.deepcopy(anchor); ws.add_image(im)
-        ws.print_title_rows = '2:10'
+        _imprimir(ws)
         nome = (chave[0] or chave[1] or 'JBT')[:28]
         folhas.append((ws, nome, chave, itens))
     # primeiro copia as folhas em branco (acima), depois preenche e nomeia
