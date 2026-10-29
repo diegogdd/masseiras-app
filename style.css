@@ -98,3 +98,11 @@ main.tr{flex:1;width:100%;max-width:640px;display:flex;flex-direction:column;pad
 .trh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}.trh b{font-size:21px}.trh span{color:var(--mut);font-size:14px}
 .trg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}.trg div{display:flex;flex-direction:column;min-width:0}.trg small{color:var(--mut);font-size:13px}.trg b{font-size:clamp(22px,min(5.2vh,8vw),38px);font-size:clamp(22px,min(5.2dvh,8vw),38px);line-height:1.15}
 @media(max-height:560px){body:has(.tr) header{padding:5px 16px}main.tr{padding:6px 14px 8px}.trbtn{min-height:38px;margin-bottom:6px}.trd{margin-bottom:6px}.trtot{margin-bottom:8px}.trtot>div{padding:4px}.trt{padding:5px 10px;margin-bottom:6px}.trh b{font-size:16px}}
+
+/* ===== Menu inicial: botões compactos para caber todos na tela (rola se faltar espaço) ===== */
+.c.menu{margin:0 auto;padding:max(16px,env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px));gap:8px}
+.c.menu h1{font-size:clamp(24px,6.5vw,32px);margin:4px 0 6px}
+.c.menu a{display:block;text-decoration:none}
+.c.menu button{width:100%;min-height:clamp(46px,7.2dvh,60px);padding:6px 14px;font-size:clamp(17px,2.6dvh,21px)}
+@media(max-height:620px){.c.menu{gap:6px}.c.menu button{min-height:42px}}
+.trg small .trb{font-style:normal;color:var(--run);font-weight:600}
