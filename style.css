@@ -83,12 +83,17 @@ table{width:100%;border-collapse:collapse;background:var(--card)}th,td{padding:1
 .grk.top .ghf{background:var(--ok)}.grk.bot .ghf{background:var(--er)}
 .ghb{display:grid;grid-template-columns:minmax(110px,32%) 1fr auto 52px;gap:10px;align-items:center;padding:5px 0}.ghb .ghw{margin:0}.ghb small{color:var(--mut);text-align:right}.ghn{font-size:17px}
 
-/* ===== Tempo Real (celular) ===== */
-.tr{max-width:640px}.trd{margin:0 0 12px;color:var(--mut)}.trbtn{width:100%;margin-bottom:16px;min-height:60px;font-size:22px}
-.trtot{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-.trtot>div{background:var(--card);border:2px solid var(--pri);border-radius:12px;padding:12px 6px;text-align:center;display:flex;flex-direction:column;min-width:0}
-.trtot small{color:var(--mut);font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}.trtot b{font-size:clamp(24px,7.6vw,42px);line-height:1.2;color:var(--pri)}
-.trt{background:var(--card);border:2px solid var(--bd);border-left:8px solid var(--t1);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+/* ===== Tempo Real (celular): compacto, cabe na tela sem rolar ===== */
+.tr{max-width:640px}main.tr{padding:8px 14px 12px}
+body:has(.tr) header{padding:8px 16px;gap:2px 18px}body:has(.tr) header .d,body:has(.tr) header .pa,body:has(.tr) header span{font-size:18px}
+.trtop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px}.trtop h2{margin:0;font-size:24px}.trtop button{min-height:38px;padding:4px 18px;font-size:16px;border-radius:8px}
+.trd{margin:0 0 8px;color:var(--mut);font-size:14px;line-height:1.25}
+.trbtn{width:100%;margin-bottom:8px;min-height:44px;font-size:18px;padding:6px}
+.trtot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.trtot>div{background:var(--card);border:2px solid var(--pri);border-radius:10px;padding:6px 4px;text-align:center;display:flex;flex-direction:column;min-width:0}
+.trtot small{color:var(--mut);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}.trtot b{font-size:clamp(22px,7vw,34px);line-height:1.15;color:var(--pri)}
+.trt{background:var(--card);border:2px solid var(--bd);border-left:6px solid var(--t1);border-radius:10px;padding:8px 12px;margin-bottom:8px}
 .trt.t2{border-left-color:var(--t2)}.trt.t3{border-left-color:var(--t3)}
-.trh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.trh b{font-size:22px}.trh span{color:var(--mut);font-size:15px}
-.trg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.trg div{display:flex;flex-direction:column;min-width:0}.trg small{color:var(--mut);font-size:14px}.trg b{font-size:clamp(20px,6.4vw,32px);line-height:1.2}
+.trh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px}.trh b{font-size:18px}.trh span{color:var(--mut);font-size:13px}
+.trg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center}.trg div{display:flex;flex-direction:column;min-width:0}.trg small{color:var(--mut);font-size:12px}.trg b{font-size:clamp(18px,5.6vw,26px);line-height:1.15}
+@media(max-height:640px){body:has(.tr) header{padding:5px 16px}main.tr{padding:6px 14px 8px}.trbtn{min-height:38px;margin-bottom:6px}.trd{margin-bottom:6px}.trtot{margin-bottom:8px}.trtot>div{padding:4px}.trt{padding:5px 10px;margin-bottom:6px}.trh b{font-size:16px}.trg b{font-size:clamp(17px,5vw,22px)}}
