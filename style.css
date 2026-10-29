@@ -105,4 +105,4 @@ main.tr{flex:1;width:100%;max-width:640px;display:flex;flex-direction:column;pad
 .c.menu a{display:block;text-decoration:none}
 .c.menu button{width:100%;min-height:clamp(46px,7.2dvh,60px);padding:6px 14px;font-size:clamp(17px,2.6dvh,21px)}
 @media(max-height:620px){.c.menu{gap:6px}.c.menu button{min-height:42px}}
-.trg small .trb{font-style:normal;color:var(--run);font-weight:600}
+.trg .trb{font-style:normal;color:var(--run);font-weight:600;font-size:13px;line-height:1.1;white-space:nowrap}
