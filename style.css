@@ -82,3 +82,13 @@ table{width:100%;border-collapse:collapse;background:var(--card)}th,td{padding:1
 .ghw{height:10px;background:var(--bg);border-radius:5px;overflow:hidden;margin-top:6px}.ghf{height:100%;background:var(--pri);border-radius:5px}
 .grk.top .ghf{background:var(--ok)}.grk.bot .ghf{background:var(--er)}
 .ghb{display:grid;grid-template-columns:minmax(110px,32%) 1fr auto 52px;gap:10px;align-items:center;padding:5px 0}.ghb .ghw{margin:0}.ghb small{color:var(--mut);text-align:right}.ghn{font-size:17px}
+
+/* ===== Tempo Real (celular) ===== */
+.tr{max-width:640px}.trd{margin:0 0 12px;color:var(--mut)}.trbtn{width:100%;margin-bottom:16px;min-height:60px;font-size:22px}
+.trtot{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.trtot>div{background:var(--card);border:2px solid var(--pri);border-radius:12px;padding:12px 6px;text-align:center;display:flex;flex-direction:column;min-width:0}
+.trtot small{color:var(--mut);font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}.trtot b{font-size:clamp(24px,7.6vw,42px);line-height:1.2;color:var(--pri)}
+.trt{background:var(--card);border:2px solid var(--bd);border-left:8px solid var(--t1);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.trt.t2{border-left-color:var(--t2)}.trt.t3{border-left-color:var(--t3)}
+.trh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.trh b{font-size:22px}.trh span{color:var(--mut);font-size:15px}
+.trg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}.trg div{display:flex;flex-direction:column;min-width:0}.trg small{color:var(--mut);font-size:14px}.trg b{font-size:clamp(20px,6.4vw,32px);line-height:1.2}

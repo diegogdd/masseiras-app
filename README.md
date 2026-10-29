@@ -63,5 +63,6 @@ A geração roda em uma função da Vercel (`api/excel.py`); o arquivo `requirem
 - Acesso **Gestor** no menu inicial (`/gestor`), só com senha (sem turno). Senha inicial: `admin2580`.
 - Mostra, por período (7, 30, 90 dias ou tudo): massas por dia (empilhadas por turno), **dias mais e menos produtivos** (com % da meta), média por dia da semana, comparação dos turnos (massas/hora, temperatura, meta atingida, reprocesso), massas por produto, horário de pico e um resumo escrito da análise.
 - O dia em andamento aparece nos gráficos (mais claro), mas só entra nos rankings e médias depois de encerrado pelos 3 turnos.
+- **Massas** contam a partir de **05/10/2026**.
 - **Pacotes** contam só a partir de **28/10/2026** (antes o embalamento não estava no sistema). Eles vêm dos pallets da transpaleteira, com ranking de melhor e pior dia, média diária, pacotes por produto e pacotes por massa.
 - Instalação: rode `supabase/migracao-gestor.sql` no SQL Editor do Supabase (não mexe no login nem nos usuários existentes). Para trocar a senha, use o `update` que está comentado no começo do arquivo.

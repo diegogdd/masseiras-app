@@ -21,7 +21,7 @@ declare t uuid; begin
 create or replace function gestor_dados(p_token uuid) returns json language plpgsql security definer set search_path=public as $$
 declare lim date; begin
   perform sess(p_token,array['gestor']);
-  lim:=(now() at time zone 'America/Sao_Paulo')::date-400;
+  lim:=greatest((now() at time zone 'America/Sao_Paulo')::date-400,date '2026-10-05'); -- massas contam a partir de 05/10/2026
   return json_build_object(
     'hoje',(now() at time zone 'America/Sao_Paulo')::date,
     'dias',(select coalesce(json_agg(x order by x.data,x.ord),'[]') from (
@@ -51,3 +51,25 @@ declare tk uuid; r jsonb; ini constant date:=date '2026-10-28'; begin
   return json_build_object('inicio',ini,
     'itens',(select coalesce(json_agg(i),'[]') from jsonb_array_elements(coalesce(r->'itens','[]'::jsonb)) i where (i->>'data')::date>=ini),
     'enc',(select coalesce(json_agg(e),'[]') from jsonb_array_elements(coalesce(r->'enc','[]'::jsonb)) e where (e->>'data')::date>=ini)); end $$;
+
+-- 5) Tempo Real: produção do dia (massas por turno + pallets/pacotes do dia) para abrir no celular.
+-- Dia de produção = hoje; se o 3º turno da noite já abriu (data de amanhã), mostra o de amanhã.
+-- Os pallets vêm do mesmo resumo que a transpaleteira usa (pallet_estado_v2/pallet_estado), lido por uma sessão
+-- interna temporária que existe só durante esta chamada. Se isso falhar, as massas continuam aparecendo e "pallets" volta nulo.
+create or replace function gestor_tempo_real(p_token uuid) returns json language plpgsql security definer set search_path=public as $$
+declare hj date; dt date; tk uuid; r jsonb; pal json; begin
+  perform sess(p_token,array['gestor']);
+  hj:=(now() at time zone 'America/Sao_Paulo')::date;
+  dt:=case when exists(select 1 from dias where data=hj+1) then hj+1 else hj end;
+  begin
+    insert into sessions(perfil,turno) values('transpaleteira',case when dt>hj then '3º turno' else '1º turno' end) returning token into tk;
+    begin r:=pallet_estado_v2(p_token:=tk)::jsonb;
+    exception when undefined_function then r:=pallet_estado(p_token:=tk)::jsonb; end;
+    pal:=json_build_object('data',r->'data','lista',coalesce(r->'lista','[]'::jsonb));
+    delete from sessions where token=tk;
+  exception when others then pal:=null; end;
+  return json_build_object('data',dt,'agora',to_char(now() at time zone 'America/Sao_Paulo','HH24:MI'),
+    'turnos',(select coalesce(json_agg(json_build_object('turno',t.turno,'massas',coalesce(x.massas,0),'status',x.status) order by t.ord),'[]')
+      from (values('1º turno',1),('2º turno',2),('3º turno',3)) as t(turno,ord)
+      left join (select d.turno,d.status,count(b.id) filter(where b.status='Finalizada') as massas from dias d left join bateladas b on b.dia_id=d.id where d.data=dt group by d.id) x on x.turno=t.turno),
+    'pallets',pal); end $$;

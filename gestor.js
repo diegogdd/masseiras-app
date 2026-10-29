@@ -86,6 +86,19 @@ ${cols(P.dd.map(x=>({l:dm(x.data),seg:[{v:x.tot,c:'var(--pri)'}],cls:x.inc?'parc
 <div><h3>▼ Menos pacotes</h3>${P.pior?rank(P.ok.slice().sort((a,b)=>a.tot-b.tot).slice(0,Math.min(5,Math.max(1,Math.floor(P.ok.length/2)))),'bot',P.media,1):'<p>Aparece com pelo menos 2 dias completos.</p>'}</div></div>
 <h3>Pacotes por produto</h3>${hbars(Object.entries(P.prod).sort((a,b)=>b[1]-a[1]))}`}</div></main>`}
 
-async function load(){const [G,P]=await Promise.all([rpc('gestor_dados'),rpcQ('gestor_pallets')]);S.G=G;S.GP=P;draw()}
+// ---------- Tempo Real (página /tempo-real, pensada para o celular) ----------
+async function loadTempo(){S.TR=await rpc('gestor_tempo_real');drawTempo()}
+function drawTempo(){const D=S.TR;if(!D)return;const L=D.pallets?(D.pallets.lista||[]):null,q=x=>Number(x.quantidade)||0;
+  const T=TUR.map((nome,i)=>{const t=(D.turnos||[]).find(x=>x.turno===nome)||{},l=(L||[]).filter(x=>String(x.turno||'').slice(0,2)===nome.slice(0,2));
+    return{nome,i,st:t.status?(t.status==='encerrado'?'Encerrado':'Em andamento'):'Sem registro',massas:Number(t.massas)||0,pacotes:L?sm(l,q):null,pallets:L?l.length:null}});
+  const tot={massas:sm(T,x=>x.massas),pacotes:L?sm(L,q):null,pallets:L?L.length:null},v=x=>x==null?'—':n(x);
+  A.innerHTML=head()+`<nav><button onclick="sair()">Sair</button></nav><main class=tr><h2>Tempo Real</h2>
+<p class=trd>Dia de produção <b>${fd(D.data)}</b> · atualizado às <b>${esc(D.agora)}</b></p>
+<button class="big reg trbtn" onclick="GESTOR.load()">Atualizar</button>
+${L?'':'<p class=aviso>Não foi possível carregar os pallets agora. Rode <b>supabase/migracao-gestor.sql</b> no Supabase (se ainda não rodou) e toque em Atualizar.</p>'}
+<div class=trtot><div><small>Massas</small><b>${v(tot.massas)}</b></div><div><small>Pacotes</small><b>${v(tot.pacotes)}</b></div><div><small>Pallets</small><b>${v(tot.pallets)}</b></div></div>
+<h3>Por turno</h3>${T.map(t=>`<div class="trt t${t.i+1}"><div class=trh><b>${t.nome}</b><span>${t.st}</span></div><div class=trg><div><small>Massas</small><b>${v(t.massas)}</b></div><div><small>Pacotes</small><b>${v(t.pacotes)}</b></div><div><small>Pallets</small><b>${v(t.pallets)}</b></div></div></div>`).join('')}</main>`}
+
+async function load(){if(window.PAGINA==='tempo')return loadTempo();const [G,P]=await Promise.all([rpc('gestor_dados'),rpcQ('gestor_pallets')]);S.G=G;S.GP=P;draw()}
 window.GESTOR={load,draw,per:v=>{S.gp=v;draw();window.scrollTo(0,0)}};
 })();
