@@ -90,7 +90,7 @@ ${cols(P.dd.map(x=>({l:dm(x.data),seg:[{v:x.tot,c:'var(--pri)'}],cls:x.inc?'parc
 // Atualiza sozinho a cada 1 s, só com a tela visível e ao voltar para o app; só redesenha se algo mudou; falha de rede na atualização automática é silenciosa. O botão Atualizar continua valendo.
 let trBusy=false,trTimer=null,trJ='';
 async function loadTempo(auto){if(trBusy)return;trBusy=true;try{const r=auto?await rpcQ('gestor_tempo_real'):await rpc('gestor_tempo_real');if(!r)return;const j=JSON.stringify(r);if(j!==trJ||!S.TR){trJ=j;S.TR=r;drawTempo()}}catch(e){if(!auto)throw e}finally{trBusy=false}
-  if(!trTimer){trTimer=setInterval(()=>{if(!document.hidden)loadTempo(true)},1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadTempo(true)})}}
+  if(!trTimer){trTimer=setInterval(()=>{if(!document.hidden)loadTempo(true)},10000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadTempo(true)})}}
 function drawTempo(){const D=S.TR;if(!D)return;const L=D.pallets?(D.pallets.lista||[]):null,q=x=>Number(x.quantidade)||0;
   const T=TUR.map((nome,i)=>{const t=(D.turnos||[]).find(x=>x.turno===nome)||{},l=(L||[]).filter(x=>String(x.turno||'').slice(0,2)===nome.slice(0,2));
     return{nome,i,st:t.status?(t.status==='encerrado'?'Encerrado':'Em andamento'):'Sem registro',massas:Number(t.massas)||0,batendo:Number(t.batendo)||0,pacotes:L?sm(l,q):null,pallets:L?l.length:null}});
