@@ -226,8 +226,8 @@ A.innerHTML=head()+`<nav><button onclick="S.PLmsg='';go('pallet')">Atualizar</bu
 // O dia de produção começa no 3º turno da noite anterior (a partir de ~22h), segue pela madrugada e depois 1º e 2º turnos.
 function pOrdena(l){const k=x=>{const m=String(x.horario||'').match(/(\d{1,2}):(\d{2})/);if(!m)return -9999;let h=+m[1];if((x.turno||'')==='3º turno'&&h>=12)h-=24;return h*60+ +m[2]};
 return (l||[]).slice().sort((a,b)=>k(b)-k(a)||(Number(b.lote)||0)-(Number(a.lote)||0))}
-function pTotal(){const t={};((S.PL&&S.PL.lista)||[]).filter(x=>x.turno===S.turno&&x.tipo==='PA').forEach(x=>{const k=x.produto||x.codigo||'—';t[k]=(t[k]||0)+Number(x.quantidade||0)});const e=Object.entries(t);
-return `<div class=ptot><b>TOTAL DE PACOTES ATÉ O MOMENTO:</b>${e.length?e.map(([k,v])=>`<div>${esc(k)}: <b>${v.toLocaleString('pt-BR')}</b> pacotes</div>`).join(''):'<div>nenhum pallet registrado neste turno</div>'}</div>`}
+function pTotal(){const t={},d={};((S.PL&&S.PL.lista)||[]).filter(x=>x.turno===S.turno).forEach(x=>{const k=x.produto||x.codigo||'—',q=Number(x.quantidade||0);t[k]=(t[k]||0)+q;if(x.tipo!=='PA'){d[k]=d[k]||{};d[k][x.tipo]=(d[k][x.tipo]||0)+q}});const e=Object.entries(t);
+return `<div class=ptot><b>TOTAL DE PACOTES ATÉ O MOMENTO:</b>${e.length?e.map(([k,v])=>`<div>${esc(k)}: <b>${v.toLocaleString('pt-BR')}</b> pacotes${d[k]?` <small>(inclui ${Object.entries(d[k]).map(([tp,q])=>`${q.toLocaleString('pt-BR')} de ${esc(tp.toLowerCase())}`).join(' e ')})</small>`:''}</div>`).join(''):'<div>nenhum pallet registrado neste turno</div>'}</div>`}
 function pNx(id){const P=S.PL,x=(P.proximos||[]).find(q=>q.produto_id===id);return x?x.proximo:P.proximo}
 function pDica(n){return n>1?'(último: '+(n-1)+')':'(1º do dia)'}
 function pProd(v){const id=parseInt(v),n=pNx(id);S.PF.produto=id;document.getElementById('pn').value=n;document.getElementById('pnh').textContent=pDica(n)}
