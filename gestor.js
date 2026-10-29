@@ -87,15 +87,15 @@ ${cols(P.dd.map(x=>({l:dm(x.data),seg:[{v:x.tot,c:'var(--pri)'}],cls:x.inc?'parc
 <h3>Pacotes por produto</h3>${hbars(Object.entries(P.prod).sort((a,b)=>b[1]-a[1]))}`}</div></main>`}
 
 // ---------- Tempo Real (página /tempo-real, pensada para o celular) ----------
-// Atualiza sozinho a cada 15 s (só com a tela visível) e ao voltar para o app; o botão Atualizar continua valendo.
-let trBusy=false,trTimer=null;
-async function loadTempo(auto){if(trBusy)return;trBusy=true;try{S.TR=await rpc('gestor_tempo_real');drawTempo()}catch(e){if(!auto)throw e}finally{trBusy=false}
-  if(!trTimer){trTimer=setInterval(()=>{if(!document.hidden)loadTempo(true)},15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadTempo(true)})}}
+// Atualiza sozinho a cada 1 s, só com a tela visível e ao voltar para o app; só redesenha se algo mudou; falha de rede na atualização automática é silenciosa. O botão Atualizar continua valendo.
+let trBusy=false,trTimer=null,trJ='';
+async function loadTempo(auto){if(trBusy)return;trBusy=true;try{const r=auto?await rpcQ('gestor_tempo_real'):await rpc('gestor_tempo_real');if(!r)return;const j=JSON.stringify(r);if(j!==trJ||!S.TR){trJ=j;S.TR=r;drawTempo()}}catch(e){if(!auto)throw e}finally{trBusy=false}
+  if(!trTimer){trTimer=setInterval(()=>{if(!document.hidden)loadTempo(true)},1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadTempo(true)})}}
 function drawTempo(){const D=S.TR;if(!D)return;const L=D.pallets?(D.pallets.lista||[]):null,q=x=>Number(x.quantidade)||0;
   const T=TUR.map((nome,i)=>{const t=(D.turnos||[]).find(x=>x.turno===nome)||{},l=(L||[]).filter(x=>String(x.turno||'').slice(0,2)===nome.slice(0,2));
     return{nome,i,st:t.status?(t.status==='encerrado'?'Encerrado':'Em andamento'):'Sem registro',massas:Number(t.massas)||0,batendo:Number(t.batendo)||0,pacotes:L?sm(l,q):null,pallets:L?l.length:null}});
   const tot={massas:sm(T,x=>x.massas),pacotes:L?sm(L,q):null,pallets:L?L.length:null},v=x=>x==null?'—':n(x);
-  A.innerHTML=head()+`<main class=tr><div class=trtop><h2>Produção Tempo Real - JBT</h2><button onclick="sair()">Sair</button></div>
+  A.innerHTML=head()+`<main class=tr><div class=trtop><h2>Tempo Real</h2><button onclick="sair()">Sair</button></div>
 <p class=trd>Dia de produção <b>${fd(D.data)}</b> · atualizado às <b>${esc(D.agora)}</b></p>
 <button class="big reg trbtn" onclick="GESTOR.load()">Atualizar</button>
 ${L?'':'<p class=aviso>Não foi possível carregar os pallets agora. Rode <b>supabase/migracao-gestor.sql</b> no Supabase (se ainda não rodou) e toque em Atualizar.</p>'}
