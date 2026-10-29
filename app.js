@@ -214,7 +214,7 @@ A.innerHTML=head()+`<nav><button onclick="S.PLmsg='';go('pallet')">Atualizar</bu
 <p>Dia de produção <b>${fd(P.data)}</b>.</p>${S.PLmsg?`<div class=balao>${esc(S.PLmsg)}</div>`:''}${S.PE&&S.PE.encerrado?`<div class=balao>Turno encerrado às ${hm(S.PE.em)}. Se registrar outro pallet, o turno volta a ficar aberto para o líder.</div>`:''}
 <div class=f><label>Produto<select id=pp onchange="pProd(this.value)">${P.produtos.map(p=>`<option value=${p.id} ${p.id===f.produto?'selected':''}>${esc((p.codigo?p.codigo+' - ':'')+p.nome)}</option>`).join('')}</select></label>
 <label><span>Lote do pallet <small id=pnh>${pDica(pNx(f.produto))}</small></span><input id=pn type=number min=1 step=1 inputmode=numeric value="${pNx(f.produto)}"></label>
-<label>Horário<input id=ph type=time value="${hhmm()}"></label>
+<label>Horário<input id=ph type=time value="${hhmm()}" oninput="this.dataset.m=1"></label>
 <label>Quantidade (pct)<input id=pq type=number value="150" inputmode=numeric></label>
 <div class=lsel><span>Letra na impressão (até 2, para mescla)</span><details id=plx><summary id=pls>${letrasTxt(f.letras)}</summary><div class=lop id=plo>${letrasOpts(f.letras)}</div></details></div>
 <label>Responsável (embalamento)<input id=pr value="${esc(f.resp)}" list=prl autocomplete=off><datalist id=prl>${P.responsaveis.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
@@ -317,6 +317,9 @@ const massasHtml=()=>{const M=S.FM;if(M==null)return '<div class=meta><span>Cont
 async function fetchMassas(){try{const {data,error}=await sb.rpc('farinha_massas',{p_token:S.token});return error?null:data}catch(e){return null}}
 async function atualizaMassas(){S.FM=await fetchMassas();const e=document.getElementById('fm2');if(e)e.innerHTML=massasHtml()}
 setInterval(()=>{if(PERFIL==='farinha'&&S.v==='farinha'&&S.token)atualizaMassas()},30000);
+// ---- Transpaleteira: o campo Horário acompanha a hora atual sozinho (se o operador não mexeu nele) ----
+function pHora(){if(PERFIL!=='transpaleteira'||S.v!=='pallet'||!S.token)return;const e=document.getElementById('ph');if(e&&!e.dataset.m&&document.activeElement!==e){const h=hhmm();if(e.value!==h)e.value=h}}
+setInterval(pHora,15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pHora()});
 // ---- Modo treinamento: tudo local no navegador, sem Supabase ----
 const DK='mq_demo_db',DP=['Pão Francês 6H','Pão Francês 90g','Pão Francês Proteico','Pão Francês 12h','Pão Cará','Integral','Massa Madre'];
 const DB=()=>{try{return JSON.parse(localStorage.getItem(DK))||{dia:null,b:[],hist:[],meta:null,seq:1}}catch(e){return {dia:null,b:[],hist:[],meta:null,seq:1}}};
