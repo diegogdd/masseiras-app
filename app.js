@@ -210,10 +210,10 @@ const LETRAS=[['C','Coopavel'],['B','Bunge'],['R','Realta'],['F','Frísia'],['RO
 const hhmm=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 function drawPallet(){const P=S.PL,f=S.PF=S.PF||{},u=P.ultimo||{};
 f.produto=f.produto??u.produto_id??(P.produtos[0]||{}).id;f.letra=f.letra??u.letra??'C';f.tipo=f.tipo||'PA';f.resp=f.resp??u.responsavel??'';f.letras=f.letras||String(f.letra||'C').split('/').filter(Boolean).slice(0,2);
-A.innerHTML=head()+`<nav><button onclick="S.PLmsg='';go('pallet')">Atualizar</button><button onclick="sair()">Sair</button></nav><main><div class=pth><h2>Entrega de pallets à expedição</h2>${pTotal()}</div>
-<p>Dia de produção <b>${fd(P.data)}</b>.</p>${S.PLmsg?`<div class=balao>${esc(S.PLmsg)}</div>`:''}${S.PE&&S.PE.encerrado?`<div class=balao>Turno encerrado às ${hm(S.PE.em)}. Se registrar outro pallet, o turno volta a ficar aberto para o líder.</div>`:''}
+A.innerHTML=head()+`<nav><button onclick="sair()">Sair</button></nav><main><div class=pth><h2>Entrega de pallets à expedição</h2>${pTotal()}</div>
+<p>Dia de produção <b>${fd(P.data)}</b>.<br><small style="color:var(--mut)">O sistema se atualiza sozinho a cada 10 segundos.</small></p>${S.PLmsg?`<div class=balao>${esc(S.PLmsg)}</div>`:''}${S.PE&&S.PE.encerrado?`<div class=balao>Turno encerrado às ${hm(S.PE.em)}. Se registrar outro pallet, o turno volta a ficar aberto para o líder.</div>`:''}
 <div class=f><label>Produto<select id=pp onchange="pProd(this.value)">${P.produtos.map(p=>`<option value=${p.id} ${p.id===f.produto?'selected':''}>${esc((p.codigo?p.codigo+' - ':'')+p.nome)}</option>`).join('')}</select></label>
-<label><span>Lote do pallet <small id=pnh>${pDica(pNx(f.produto))}</small></span><input id=pn type=number min=1 step=1 inputmode=numeric value="${pNx(f.produto)}"></label>
+<label><span>Lote do pallet <small id=pnh>${pDica(pNx(f.produto))}</small></span><input id=pn type=number min=1 step=1 inputmode=numeric value="${pNx(f.produto)}" oninput="this.dataset.m=1"></label>
 <label>Horário<input id=ph type=time value="${hhmm()}" oninput="this.dataset.m=1"></label>
 <label>Quantidade (pct)<input id=pq type=number value="150" inputmode=numeric></label>
 <div class=lsel><span>Letra na impressão (até 2, para mescla)</span><details id=plx><summary id=pls>${letrasTxt(f.letras)}</summary><div class=lop id=plo>${letrasOpts(f.letras)}</div></details></div>
@@ -221,7 +221,8 @@ A.innerHTML=head()+`<nav><button onclick="S.PLmsg='';go('pallet')">Atualizar</bu
 <label>Observação (opcional)<input id=po autocomplete=off></label></div>
 <div class="grid tipo">${['PA','Reprocesso','Retrabalho'].map(t=>`<button data-t="${t}" class="${f.tipo===t?'sel':''}" onclick="pTipo('${t}')">${t.toUpperCase()}</button>`).join('')}</div>
 <div class=foot><button class="big reg" onclick=pReg()>Registrar pallet</button><button onclick=pDesfaz()>Desfazer o último pallet do turno</button>${S.PE&&S.PE.encerrado?'':'<button onclick=pEncerra()>Encerrar meu turno</button>'}</div>
-<h3>Pallets do dia</h3><div class=wrap><table><tr><th>Lote<th>Horário<th>Turno<th>Produto<th>Qtd<th>Letra<th>Responsável<th>Tipo</tr>${pOrdena(P.lista).map(x=>`<tr><td><b>${x.lote}</b><td>${esc(x.horario)}<td>${esc((x.turno||'').slice(0,2))}<td>${esc(x.codigo||x.produto||'')}<td>${x.quantidade}<td>${esc(x.letra)}<td>${esc(x.responsavel||'—')}<td>${esc(x.tipo)}${x.obs?' · '+esc(x.obs):''}</tr>`).join('')||'<tr><td colspan=8>Nenhum pallet registrado neste dia.</tr>'}</table></div></main>`}
+<h3>Pallets do dia</h3><div class=wrap id=ptab>${pTab()}</div></main>`}
+function pTab(){return `<table><tr><th>Lote<th>Horário<th>Turno<th>Produto<th>Qtd<th>Letra<th>Responsável<th>Tipo</tr>${pOrdena(S.PL.lista).map(x=>`<tr><td><b>${x.lote}</b><td>${esc(x.horario)}<td>${esc((x.turno||'').slice(0,2))}<td>${esc(x.codigo||x.produto||'')}<td>${x.quantidade}<td>${esc(x.letra)}<td>${esc(x.responsavel||'—')}<td>${esc(x.tipo)}${x.obs?' · '+esc(x.obs):''}</tr>`).join('')||'<tr><td colspan=8>Nenhum pallet registrado neste dia.</tr>'}</table>`}
 // Pallets do dia: mais recente primeiro, pelo HORÁRIO apontado (não pela ordem em que foi registrado).
 // O dia de produção começa no 3º turno da noite anterior (a partir de ~22h), segue pela madrugada e depois 1º e 2º turnos.
 function pOrdena(l){const k=x=>{const m=String(x.horario||'').match(/(\d{1,2}):(\d{2})/);if(!m)return -9999;let h=+m[1];if((x.turno||'')==='3º turno'&&h>=12)h-=24;return h*60+ +m[2]};
@@ -319,7 +320,14 @@ async function atualizaMassas(){S.FM=await fetchMassas();const e=document.getEle
 setInterval(()=>{if(PERFIL==='farinha'&&S.v==='farinha'&&S.token)atualizaMassas()},30000);
 // ---- Transpaleteira: o campo Horário acompanha a hora atual sozinho (se o operador não mexeu nele) ----
 function pHora(){if(PERFIL!=='transpaleteira'||S.v!=='pallet'||!S.token)return;const e=document.getElementById('ph');if(e&&!e.dataset.m&&document.activeElement!==e){const h=hhmm();if(e.value!==h)e.value=h}}
-setInterval(pHora,15000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pHora()});
+let pBusy=false;
+async function pAtualiza(){if(PERFIL!=='transpaleteira'||S.v!=='pallet'||!S.token||pBusy||document.hidden)return;pBusy=true;
+  try{const L=(await rpcQ('pallet_estado_v2'))||(await rpcQ('pallet_estado')),E=await rpcQ('pallet_turno_estado');if(!L||S.v!=='pallet')return;S.PL=L;if(E)S.PE=E;
+    const t=document.querySelector('.ptot'),w=document.getElementById('ptab');if(t)t.outerHTML=pTotal();if(w)w.innerHTML=pTab();
+    const n=document.getElementById('pn'),h=document.getElementById('pnh');if(n&&!n.dataset.m&&document.activeElement!==n){n.value=pNx(S.PF.produto);if(h)h.textContent=pDica(pNx(S.PF.produto))}
+  }catch(e){}finally{pBusy=false}}
+function pTick(){pHora();pAtualiza()}
+setInterval(pTick,10000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pTick()});
 // ---- Modo treinamento: tudo local no navegador, sem Supabase ----
 const DK='mq_demo_db',DP=['Pão Francês 6H','Pão Francês 90g','Pão Francês Proteico','Pão Francês 12h','Pão Cará','Integral','Massa Madre'];
 const DB=()=>{try{return JSON.parse(localStorage.getItem(DK))||{dia:null,b:[],hist:[],meta:null,seq:1}}catch(e){return {dia:null,b:[],hist:[],meta:null,seq:1}}};
