@@ -4,19 +4,20 @@
 const pad=(n,l)=>String(n).padStart(l,'0');
 const hoje=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1,2)+'-'+pad(d.getDate(),2)};
 const fmt=i=>{if(!i)return'';const [y,m,d]=i.split('-');return d+'/'+m+'/'+y.slice(2)};
-// Validade = fabricação + N meses - 1 dia (ex.: 16/09/26 + 6 meses -> 15/03/27)
-function validade(i,meses){if(!i)return'';const [y,m,d]=i.split('-').map(Number),a=new Date(y,m-1+meses,1),u=new Date(a.getFullYear(),a.getMonth()+1,0).getDate();a.setDate(Math.min(d,u));a.setDate(a.getDate()-1);return a.getFullYear()+'-'+pad(a.getMonth()+1,2)+'-'+pad(a.getDate(),2)}
-const F={prod:null,qtd:150,fab:hoje(),meses:6,ordem:'',ini:1,fim:1,desc:'',lastro:'',alt:''};
+// Validade = fabricação + N dias (ex.: PF0005: 31/10/26 + 90 = 29/01/27; SP0118: 16/09/26 + 180 = 15/03/27)
+const DIAS={PF0005:90,SP0118:180}; // validade padrão (dias) por código; os demais começam com 90
+function validade(i,dias){if(!i)return'';const [y,m,d]=i.split('-').map(Number),a=new Date(y,m-1,d+dias);return a.getFullYear()+'-'+pad(a.getMonth()+1,2)+'-'+pad(a.getDate(),2)}
+const F={prod:null,qtd:150,fab:hoje(),dias:90,ordem:'',ini:1,fim:1,desc:'',lastro:10,alt:15};
 let PR=[];
 const cur=()=>PR.find(p=>String(p.id)===String(F.prod));
 const dk=p=>'imp_'+(p.codigo||p.id);
-function carrega(p){let d={};try{d=JSON.parse(localStorage.getItem(dk(p))||'{}')}catch(e){}F.desc=d.desc!=null?d.desc:p.nome;F.lastro=d.lastro!=null?d.lastro:'';F.alt=d.alt!=null?d.alt:'';F.meses=d.meses!=null?d.meses:6}
-function guarda(){const p=cur();if(!p)return;try{localStorage.setItem(dk(p),JSON.stringify({desc:F.desc,lastro:F.lastro,alt:F.alt,meses:F.meses}))}catch(e){}}
+function carrega(p){let d={};try{d=JSON.parse(localStorage.getItem(dk(p))||'{}')}catch(e){}F.desc=d.desc!=null?d.desc:p.nome;F.lastro=d.lastro!=null&&d.lastro!==''?d.lastro:10;F.alt=d.alt!=null&&d.alt!==''?d.alt:15;F.dias=d.dias!=null&&d.dias!==''?d.dias:(DIAS[p.codigo]||90)}
+function guarda(){const p=cur();if(!p)return;try{localStorage.setItem(dk(p),JSON.stringify({desc:F.desc,lastro:F.lastro,alt:F.alt,dias:F.dias}))}catch(e){}}
 const tam=(t,max,larg)=>Math.min(max,larg/(Math.max(t.length,1)*.5)).toFixed(1)+'mm';
 const PALLET='<svg viewBox="0 0 60 50" fill="none" stroke="#000" stroke-width="1.6" stroke-linejoin="round"><rect x="6" y="4" width="22" height="12"/><rect x="28" y="4" width="22" height="12"/><rect x="6" y="16" width="22" height="12"/><rect x="28" y="16" width="22" height="12"/><path d="M6 4l8-3h22l14 3M50 4l6-3v24l-6 3"/><rect x="2" y="32" width="56" height="5" fill="#000"/><rect x="5" y="37" width="8" height="7"/><rect x="26" y="37" width="8" height="7"/><rect x="47" y="37" width="8" height="7"/></svg>';
 function etq(n){const p=cur(),cod=p.codigo||'',lt=String(F.ordem),sb=pad(n,2),tot=(Number(F.lastro)||0)*(Number(F.alt)||0),bc=t=>`<div class=bcw><svg class=bc data-v="${esc(t)}" preserveAspectRatio="none"></svg></div>`;
 return `<div class=etq>
-<div class="cl v"><div class=cp>Validade</div><div class=cv><span class=dt>${fmt(validade(F.fab,Number(F.meses)||0))}</span></div></div>
+<div class="cl v"><div class=cp>Validade</div><div class=cv><span class=dt>${fmt(validade(F.fab,Number(F.dias)||0))}</span></div></div>
 <div class="cl q"><div class=cp>Quantidade</div><div class=cv>${bc(String(F.qtd))}<span class=big style="font-size:30mm">${esc(F.qtd)}</span></div></div>
 <div class="cl fb"><div class=cp>Fabricação</div><div class=cv><span class=dt>${fmt(F.fab)}</span></div></div>
 <div class="cl cd"><div class=cp>Código</div><div class=cv><span class=big style="font-size:${tam(cod,30,112)}">${esc(cod)}</span>${bc(cod)}</div></div>
@@ -36,9 +37,9 @@ function previa(){const w=document.getElementById('pw');if(!w||!cur())return;
   const e=w.firstElementChild,k=Math.min(1,w.clientWidth/e.offsetWidth);e.style.transform='scale('+k+')';w.style.height=(e.offsetHeight*k)+'px';
   const lt=document.getElementById('lt'),v=document.getElementById('vl'),tt=document.getElementById('tt');
   const fi=Math.max(n,parseInt(F.fim)||n);if(lt)lt.innerHTML=F.ordem?`Lote impresso: <b>${esc(F.ordem)}</b> · Sublotes: <b>${pad(n,2)}${fi>n?' a '+pad(fi,2):''}</b>`:'Informe o nº da ordem (é o lote impresso na etiqueta).';
-  if(v)v.innerHTML=`Validade: <b>${fmt(validade(F.fab,Number(F.meses)||0))}</b>`;if(tt)tt.value=(Number(F.lastro)||0)*(Number(F.alt)||0)||''}
-function set(k,v){F[k]=v;if(['desc','lastro','alt','meses'].includes(k))guarda();previa()}
-function troca(id){F.prod=id;carrega(cur());const g=x=>document.getElementById(x);g('ds').value=F.desc;g('la').value=F.lastro;g('al').value=F.alt;g('me').value=F.meses;previa()}
+  if(v)v.innerHTML=`Validade: <b>${fmt(validade(F.fab,Number(F.dias)||0))}</b>`;if(tt)tt.value=(Number(F.lastro)||0)*(Number(F.alt)||0)||''}
+function set(k,v){F[k]=v;if(['desc','lastro','alt','dias'].includes(k))guarda();previa()}
+function troca(id){F.prod=id;carrega(cur());const g=x=>document.getElementById(x);g('ds').value=F.desc;g('la').value=F.lastro;g('al').value=F.alt;g('me').value=F.dias;previa()}
 function imprimir(){const p=cur(),ini=parseInt(F.ini),fim=parseInt(F.fim),er=document.getElementById('er');er.textContent='';
   if(!p)return er.textContent='Escolha o produto.';
   if(!p.codigo)return er.textContent='Este produto ainda não tem código cadastrado (Administrador > Produtos e códigos).';
@@ -64,7 +65,7 @@ A.innerHTML=head()+`<nav><button onclick="location.href='/'">Menu</button><butto
 <div class=f><label>Qtd por lastro<input id=la type=number min=0 inputmode=numeric value="${esc(F.lastro)}" oninput="IMPRESSOES.set('lastro',this.value)"></label>
 <label>Altura (lastros)<input id=al type=number min=0 inputmode=numeric value="${esc(F.alt)}" oninput="IMPRESSOES.set('alt',this.value)"></label>
 <label>Total por pallet<input id=tt readonly tabindex=-1></label>
-<label>Validade (meses)<input id=me type=number min=1 inputmode=numeric value="${esc(F.meses)}" oninput="IMPRESSOES.set('meses',this.value)"></label></div>
+<label>Validade (dias)<input id=me type=number min=1 inputmode=numeric value="${esc(F.dias)}" oninput="IMPRESSOES.set('dias',this.value)"></label></div>
 <div class=acoes><button class=big onclick="IMPRESSOES.imprimir()">Imprimir</button><span class=er id=er></span></div>
 <h3 class=sec>Prévia <small style="font-weight:400;color:var(--mut)">(primeira etiqueta)</small></h3><div class=pw id=pw></div></main>`;
 previa()}
