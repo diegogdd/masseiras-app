@@ -7,7 +7,7 @@ const fmt=i=>{if(!i)return'';const [y,m,d]=i.split('-');return d+'/'+m+'/'+y.sli
 // Validade = fabricação + N dias (ex.: PF0005: 31/10/26 + 90 = 29/01/27; SP0118: 16/09/26 + 180 = 15/03/27)
 const DIAS={PF0005:90,SP0118:180}; // validade padrão (dias) por código; os demais começam com 90
 function validade(i,dias){if(!i)return'';const [y,m,d]=i.split('-').map(Number),a=new Date(y,m-1,d+dias);return a.getFullYear()+'-'+pad(a.getMonth()+1,2)+'-'+pad(a.getDate(),2)}
-const F={prod:null,qtd:150,fab:hoje(),dias:90,ordem:'',ini:1,fim:1,desc:'',lastro:10,alt:15};
+const F={man:false,prod:null,qtd:150,fab:hoje(),dias:90,ordem:'',ini:1,fim:1,desc:'',lastro:10,alt:15};
 let PR=[];
 const cur=()=>PR.find(p=>String(p.id)===String(F.prod));
 const dk=p=>'imp_'+(p.codigo||p.id);
@@ -32,14 +32,21 @@ return `<div class=etq>
 </div>`}
 function barras(el){el.querySelectorAll('svg.bc').forEach(s=>{try{JsBarcode(s,s.dataset.v,{format:'CODE128',displayValue:false,margin:0,width:2,height:60});
   const w=s.getAttribute('width'),h=s.getAttribute('height');if(!s.getAttribute('viewBox')&&w&&h)s.setAttribute('viewBox','0 0 '+parseFloat(w)+' '+parseFloat(h));s.removeAttribute('width');s.removeAttribute('height');s.setAttribute('preserveAspectRatio','none')}catch(e){}})}
+const ANT={'1º turno':'3º turno','2º turno':'1º turno','3º turno':'2º turno'};
+// Próximo lote vem dos registros da transpaleteira (mesma conta da tela de pallets); lote inicial e final já começam nele
+function lote0(){const p=cur();if(!p||!S.PL||typeof pNx!=='function')return;const n=Number(pNx(p.id));if(n>0){F.ini=n;F.fim=n}}
+function info(){const p=cur(),L=(S.PL&&S.PL.lista)||[],t=ANT[S.turno];if(!p||!t)return'';
+  const meus=L.filter(x=>p.codigo&&x.codigo?x.codigo===p.codigo:x.produto===p.nome),lt=x=>Number(x.lote)||0,a=meus.filter(x=>x.turno===t).map(lt),dia=meus.map(lt),ud=dia.length?Math.max(...dia):0;
+  const txt=a.length?`Último lote apontado no <b>${t}</b>: <b>${Math.max(...a)}</b>`:`Nenhum lote apontado no <b>${t}</b> para este produto neste dia`;
+  return txt+(ud&&(!a.length||ud>Math.max(...a))?` · último apontado no dia: <b>${ud}</b>`:'')}
 function previa(){const w=document.getElementById('pw');if(!w||!cur())return;
   const n=Math.max(1,parseInt(F.ini)||1);w.innerHTML=etq(n);barras(w);
   const e=w.firstElementChild,k=Math.min(1,w.clientWidth/e.offsetWidth);e.style.transform='scale('+k+')';w.style.height=(e.offsetHeight*k)+'px';
-  const lt=document.getElementById('lt'),v=document.getElementById('vl'),tt=document.getElementById('tt');
+  const ul=document.getElementById('ul');if(ul)ul.innerHTML=info();const lt=document.getElementById('lt'),v=document.getElementById('vl'),tt=document.getElementById('tt');
   const fi=Math.max(n,parseInt(F.fim)||n);if(lt)lt.innerHTML=F.ordem?`Lote impresso: <b>${esc(F.ordem)}</b> · Sublotes: <b>${pad(n,2)}${fi>n?' a '+pad(fi,2):''}</b>`:'Informe o nº da ordem (é o lote impresso na etiqueta).';
   if(v)v.innerHTML=`Validade: <b>${fmt(validade(F.fab,Number(F.dias)||0))}</b>`;if(tt)tt.value=(Number(F.lastro)||0)*(Number(F.alt)||0)||''}
-function set(k,v){F[k]=v;if(['desc','lastro','alt','dias'].includes(k))guarda();previa()}
-function troca(id){F.prod=id;carrega(cur());const g=x=>document.getElementById(x);g('ds').value=F.desc;g('la').value=F.lastro;g('al').value=F.alt;g('me').value=F.dias;previa()}
+function set(k,v){F[k]=v;if(k==='ini'||k==='fim')F.man=true;if(['desc','lastro','alt','dias'].includes(k))guarda();previa()}
+async function troca(id){F.prod=id;F.man=false;carrega(cur());const L=await rpcQ('pallet_estado_v2');if(L)S.PL=L;lote0();const g=x=>document.getElementById(x);g('li').value=F.ini;g('lf').value=F.fim;g('ds').value=F.desc;g('la').value=F.lastro;g('al').value=F.alt;g('me').value=F.dias;previa()}
 function imprimir(){const p=cur(),ini=parseInt(F.ini),fim=parseInt(F.fim),er=document.getElementById('er');er.textContent='';
   if(!p)return er.textContent='Escolha o produto.';
   if(!p.codigo)return er.textContent='Este produto ainda não tem código cadastrado (Administrador > Produtos e códigos).';
@@ -59,7 +66,7 @@ A.innerHTML=head()+`<nav><button onclick="location.href='/'">Menu</button><butto
 <label>Nº da ordem<input id=or inputmode=numeric value="${esc(F.ordem)}" oninput="IMPRESSOES.set('ordem',this.value.trim())"></label></div>
 <div class=f><label>Lote inicial<input id=li type=number min=1 inputmode=numeric value="${esc(F.ini)}" oninput="IMPRESSOES.set('ini',this.value)"></label>
 <label>Lote final<input id=lf type=number min=1 inputmode=numeric value="${esc(F.fim)}" oninput="IMPRESSOES.set('fim',this.value)"></label></div>
-<p class=hint id=lt></p><p class=hint id=vl></p>
+<p class=hint id=ul></p><p class=hint id=lt></p><p class=hint id=vl></p>
 <h3 class=sec>Dados da etiqueta <small style="font-weight:400;color:var(--mut)">(ficam salvos por produto neste aparelho)</small></h3>
 <div class=f><label>Descrição<textarea id=ds oninput="IMPRESSOES.set('desc',this.value)">${esc(F.desc)}</textarea></label></div>
 <div class=f><label>Qtd por lastro<input id=la type=number min=0 inputmode=numeric value="${esc(F.lastro)}" oninput="IMPRESSOES.set('lastro',this.value)"></label>
@@ -69,7 +76,11 @@ A.innerHTML=head()+`<nav><button onclick="location.href='/'">Menu</button><butto
 <div class=acoes><button class=big onclick="IMPRESSOES.imprimir()">Imprimir</button><span class=er id=er></span></div>
 <h3 class=sec>Prévia <small style="font-weight:400;color:var(--mut)">(primeira etiqueta)</small></h3><div class=pw id=pw></div></main>`;
 previa()}
+// Atualiza sozinho (10 s): se o operador não mexeu no lote inicial/final, acompanha o próximo lote da transpaleteira
+async function refresca(){if(document.hidden||!document.getElementById('pw'))return;const L=await rpcQ('pallet_estado_v2');if(!L)return;S.PL=L;
+  if(!F.man&&cur()){lote0();const a=document.getElementById('li'),b=document.getElementById('lf');if(a&&document.activeElement!==a)a.value=F.ini;if(b&&document.activeElement!==b)b.value=F.fim}previa()}
+setInterval(refresca,10000);
 window.addEventListener('resize',()=>{if(document.getElementById('pw'))previa()});
-window.IMPRESSOES={set,troca,imprimir,async load(){const L=(await rpcQ('pallet_estado_v2'))||await rpc('pallet_estado');PR=((L&&L.produtos)||[]).slice();if(!PR.length){A.innerHTML=head()+`<nav><button onclick="location.href='/'">Menu</button><button onclick="sair()">Sair</button></nav><main><h2>Impressões</h2><p>Nenhum produto cadastrado.</p></main>`;return}
-  if(!cur()){F.prod=PR[0].id;carrega(PR[0])}draw()}};
+window.IMPRESSOES={set,troca,imprimir,async load(){const L=(await rpcQ('pallet_estado_v2'))||await rpc('pallet_estado');S.PL=L;PR=((L&&L.produtos)||[]).slice();if(!PR.length){A.innerHTML=head()+`<nav><button onclick="location.href='/'">Menu</button><button onclick="sair()">Sair</button></nav><main><h2>Impressões</h2><p>Nenhum produto cadastrado.</p></main>`;return}
+  if(!cur()){F.prod=PR[0].id;carrega(PR[0])}lote0();draw()}};
 })();
