@@ -1,5 +1,5 @@
 /* Etiqueta de identificação de pallet (A4 paisagem, uma por folha) + tela de Impressões */
-.etq{--bd:2px solid #000;box-sizing:border-box;width:285mm;height:197mm;display:grid;grid-template-columns:57fr 124fr 227fr 119fr 68fr 116fr;grid-template-rows:29fr 29fr 26fr 16fr;background:#fff;color:#000;font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-weight:700;border-top:var(--bd);border-left:var(--bd)}
+.etq{--bd:2px solid #000;box-sizing:border-box;width:284mm;height:195mm;display:grid;grid-template-columns:57fr 124fr 227fr 119fr 68fr 116fr;grid-template-rows:29fr 29fr 26fr 16fr;background:#fff;color:#000;font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-weight:700;border-top:var(--bd);border-left:var(--bd)}
 .etq .cl{display:flex;flex-direction:column;min-width:0;min-height:0;border-right:var(--bd);border-bottom:var(--bd);overflow:hidden}
 .etq .cp{flex:none;background:#d9d9d9;border-bottom:1px solid #000;text-align:center;font-size:4.2mm;line-height:5mm;letter-spacing:.3mm;font-weight:600;text-transform:uppercase}
 .etq .cv{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0;padding:1mm 3mm;text-align:center}
@@ -37,6 +37,6 @@
   html,body{background:#fff!important;margin:0!important;padding:0!important}
   body>*:not(#folhas){display:none!important}
   #folhas{display:block!important}
-  #folhas .etq{page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  #folhas .etq:last-child{page-break-after:auto;break-after:auto}
+  #folhas .pg{box-sizing:border-box;width:284mm;height:196mm;overflow:hidden;break-inside:avoid;page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #folhas .pg:last-child{page-break-after:auto;break-after:auto}
 }
