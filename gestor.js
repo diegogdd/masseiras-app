@@ -101,7 +101,7 @@ function drawTempo(){const D=S.TR;if(!D)return;const L=D.pallets?(D.pallets.list
   const T=TUR.map((nome,i)=>{const t=(D.turnos||[]).find(x=>x.turno===nome)||{},l=(L||[]).filter(x=>String(x.turno||'').slice(0,2)===nome.slice(0,2));
     return{nome,i,st:t.status?(t.status==='encerrado'?'Encerrado':'Em andamento'):'Sem registro',massas:Number(t.massas)||0,batendo:Number(t.batendo)||0,pacotes:L?sm(l,q):null,pallets:L?l.length:null}});
   const tot={massas:sm(T,x=>x.massas),pacotes:L?sm(L,q):null,pallets:L?L.length:null},v=x=>x==null?'—':n(x);
-  A.innerHTML=head()+`<main class=tr><div class=trtop><h2>Produção Tempo Real - JBT</h2><button onclick="sair()">Sair</button></div>
+  A.innerHTML=head()+`<main class=tr><div class=trtop><h2>Tempo Real</h2><button onclick="sair()">Sair</button></div>
 <p class=trd>Dia de produção <b>${fd(D.data)}</b> · atualizado às <b>${esc(D.agora)}</b></p>
 <button class="big reg trbtn" onclick="GESTOR.load()">Atualizar</button>
 ${L?'':'<p class=aviso>Não foi possível carregar os pallets agora. Rode <b>supabase/migracao-gestor.sql</b> no Supabase (se ainda não rodou) e toque em Atualizar.</p>'}

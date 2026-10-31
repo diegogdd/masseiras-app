@@ -69,7 +69,7 @@ declare hj date; dt date; tk uuid; r jsonb; pal json; begin
     delete from sessions where token=tk;
   exception when others then pal:=null; end;
   return json_build_object('data',dt,'agora',to_char(now() at time zone 'America/Sao_Paulo','HH24:MI'),
-    'turnos',(select coalesce(json_agg(json_build_object('turno',t.turno,'massas',coalesce(x.massas,0),'status',x.status) order by t.ord),'[]')
+    'turnos',(select coalesce(json_agg(json_build_object('turno',t.turno,'massas',coalesce(x.massas,0),'batendo',coalesce(x.batendo,0),'status',x.status) order by t.ord),'[]')
       from (values('1º turno',1),('2º turno',2),('3º turno',3)) as t(turno,ord)
-      left join (select d.turno,d.status,count(b.id) filter(where b.status='Finalizada') as massas from dias d left join bateladas b on b.dia_id=d.id where d.data=dt group by d.id) x on x.turno=t.turno),
+      left join (select d.turno,d.status,count(b.id) filter(where b.status in('Finalizada','Batendo')) as massas, count(b.id) filter(where b.status='Batendo') as batendo from dias d left join bateladas b on b.dia_id=d.id where d.data=dt group by d.id) x on x.turno=t.turno),
     'pallets',pal); end $$;

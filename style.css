@@ -87,7 +87,7 @@ table{width:100%;border-collapse:collapse;background:var(--card)}th,td{padding:1
 body:has(.tr) #app{min-height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));display:flex;flex-direction:column}
 body:has(.tr) header{padding:8px 16px;gap:2px 18px}body:has(.tr) header .d,body:has(.tr) header .pa,body:has(.tr) header span{font-size:19px}
 main.tr{flex:1;width:100%;max-width:640px;display:flex;flex-direction:column;padding:10px 14px 12px}
-.trtop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px}.trtop h2{margin:0;font-size:22px}.trtop button{min-height:42px;padding:4px 20px;font-size:17px;border-radius:9px}
+.trtop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px}.trtop h2{margin:0;font-size:27px}.trtop button{min-height:42px;padding:4px 20px;font-size:17px;border-radius:9px}
 .trd{margin:0 0 10px;color:var(--mut);font-size:15px;line-height:1.25}
 .trbtn{width:100%;margin-bottom:10px;min-height:52px;font-size:20px;padding:6px}
 .trtot{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
@@ -106,3 +106,6 @@ main.tr{flex:1;width:100%;max-width:640px;display:flex;flex-direction:column;pad
 .c.menu button{width:100%;min-height:clamp(46px,7.2dvh,60px);padding:6px 14px;font-size:clamp(17px,2.6dvh,21px)}
 @media(max-height:620px){.c.menu{gap:6px}.c.menu button{min-height:42px}}
 .trg .trb{font-style:normal;color:var(--run);font-weight:600;font-size:13px;line-height:1.1;white-space:nowrap}
+/* Transpaleteira: turno em destaque (amarelo, grande) no topo */
+header .turno{font-size:clamp(26px,7.5vw,42px);font-weight:700;text-transform:uppercase;letter-spacing:1px;line-height:1.1;color:#ffd400;background:#14202b;padding:3px 14px;border-radius:8px}
+body:has(.tr) header .turno{font-size:clamp(26px,7.5vw,42px)}
