@@ -11,11 +11,11 @@ const F={man:false,prod:null,qtd:150,fab:hoje(),dias:90,ordem:'',ini:1,fim:1,des
 let PR=[];
 const cur=()=>PR.find(p=>String(p.id)===String(F.prod));
 const dk=p=>'imp_'+(p.codigo||p.id);
-function carrega(p){let d={};try{d=JSON.parse(localStorage.getItem(dk(p))||'{}')}catch(e){}F.desc=d.desc!=null?d.desc:p.nome;F.lastro=d.lastro!=null&&d.lastro!==''?d.lastro:10;F.alt=d.alt!=null&&d.alt!==''?d.alt:15;F.dias=d.dias!=null&&d.dias!==''?d.dias:(DIAS[p.codigo]||90)}
-function guarda(){const p=cur();if(!p)return;try{localStorage.setItem(dk(p),JSON.stringify({desc:F.desc,lastro:F.lastro,alt:F.alt,dias:F.dias}))}catch(e){}}
+function carrega(p){let d={};try{d=JSON.parse(localStorage.getItem(dk(p))||'{}')}catch(e){}F.desc=d.desc!=null?d.desc:p.nome;F.lastro=10;F.alt=15;F.dias=d.dias!=null&&d.dias!==''?d.dias:(DIAS[p.codigo]||90)}
+function guarda(){const p=cur();if(!p)return;try{localStorage.setItem(dk(p),JSON.stringify({desc:F.desc,dias:F.dias}))}catch(e){}}
 const tam=(t,max,larg)=>Math.min(max,larg/(Math.max(t.length,1)*.5)).toFixed(1)+'mm';
 const PALLET='<svg viewBox="0 0 60 50" fill="none" stroke="#000" stroke-width="1.6" stroke-linejoin="round"><rect x="6" y="4" width="22" height="12"/><rect x="28" y="4" width="22" height="12"/><rect x="6" y="16" width="22" height="12"/><rect x="28" y="16" width="22" height="12"/><path d="M6 4l8-3h22l14 3M50 4l6-3v24l-6 3"/><rect x="2" y="32" width="56" height="5" fill="#000"/><rect x="5" y="37" width="8" height="7"/><rect x="26" y="37" width="8" height="7"/><rect x="47" y="37" width="8" height="7"/></svg>';
-function etq(n){const p=cur(),cod=p.codigo||'',lt=String(F.ordem),sb=pad(n,2),tot=(Number(F.lastro)||0)*(Number(F.alt)||0),bc=t=>`<div class=bcw><svg class=bc data-v="${esc(t)}" preserveAspectRatio="none"></svg></div>`;
+function etq(n){const p=cur(),cod=p.codigo||'',lt=String(F.ordem),sb=pad(n,2),tn=parseInt(S.turno)||0,tot=(Number(F.lastro)||0)*(Number(F.alt)||0),bc=t=>`<div class=bcw><svg class=bc data-v="${esc(t)}" preserveAspectRatio="none"></svg></div>`;
 return `<div class=etq>
 <div class="cl v"><div class=cp>Validade</div><div class=cv><span class=dt>${fmt(validade(F.fab,Number(F.dias)||0))}</span></div></div>
 <div class="cl q"><div class=cp>Quantidade</div><div class=cv>${bc(String(F.qtd))}<span class=big style="font-size:30mm">${esc(F.qtd)}</span></div></div>
@@ -23,7 +23,7 @@ return `<div class=etq>
 <div class="cl cd"><div class=cp>Código</div><div class=cv><span class=big style="font-size:${tam(cod,30,112)}">${esc(cod)}</span>${bc(cod)}</div></div>
 <div class="cl sl"><div class=cp>Sublotes</div><div class=cv><span class=big style="font-size:48mm">${esc(sb)}</span></div></div>
 <div class="cl lt"><div class=cp>Lote</div><div class=cv><span class=big style="font-size:${tam(lt,17,112)}">${esc(lt)}</span>${bc(lt)}</div></div>
-<div class="cl tu"><div class=cp>Turno</div><div class=cv><div class=tl>1<i></i></div><div class=tl>2<i></i></div><div class=tl>3<i></i></div></div></div>
+<div class="cl tu"><div class=cp>Turno</div><div class=cv>${[1,2,3].map(t=>`<div class=tl>${t}<i>${t===tn?'X':''}</i></div>`).join('')}</div></div>
 <div class="cl pl"><div class=cp>Paletização</div><div class=cv><div class=tx>Qtd por lastro: ${esc(F.lastro)}<br>Altura: ${esc(F.alt)}<br>Total: ${tot?tot:''}</div>${PALLET}</div></div>
 <div class="cl ds"><div class=cp>Descrição</div><div class=cv>${esc(F.desc)}</div></div>
 <div class="cl rs"><div class=cp>Responsável</div><div class=cv></div></div>
@@ -45,7 +45,7 @@ function previa(){const w=document.getElementById('pw');if(!w||!cur())return;
   const ul=document.getElementById('ul');if(ul)ul.innerHTML=info();const lt=document.getElementById('lt'),v=document.getElementById('vl'),tt=document.getElementById('tt');
   const fi=Math.max(n,parseInt(F.fim)||n);if(lt)lt.innerHTML=F.ordem?`Lote impresso: <b>${esc(F.ordem)}</b> · Sublotes: <b>${pad(n,2)}${fi>n?' a '+pad(fi,2):''}</b>`:'Informe o nº da ordem (é o lote impresso na etiqueta).';
   if(v)v.innerHTML=`Validade: <b>${fmt(validade(F.fab,Number(F.dias)||0))}</b>`;if(tt)tt.value=(Number(F.lastro)||0)*(Number(F.alt)||0)||''}
-function set(k,v){F[k]=v;if(k==='ini'||k==='fim')F.man=true;if(['desc','lastro','alt','dias'].includes(k))guarda();previa()}
+function set(k,v){F[k]=v;if(k==='ini'||k==='fim')F.man=true;if(['desc','dias'].includes(k))guarda();previa()}
 async function troca(id){F.prod=id;F.man=false;carrega(cur());const L=await rpcQ('pallet_estado_v2');if(L)S.PL=L;lote0();const g=x=>document.getElementById(x);g('li').value=F.ini;g('lf').value=F.fim;g('ds').value=F.desc;g('la').value=F.lastro;g('al').value=F.alt;g('me').value=F.dias;previa()}
 function imprimir(){const p=cur(),ini=parseInt(F.ini),fim=parseInt(F.fim),er=document.getElementById('er');er.textContent='';
   if(!p)return er.textContent='Escolha o produto.';
@@ -67,7 +67,7 @@ A.innerHTML=head()+`<nav><button onclick="location.href='/'">Menu</button><butto
 <div class=f><label>Lote inicial<input id=li type=number min=1 inputmode=numeric value="${esc(F.ini)}" oninput="IMPRESSOES.set('ini',this.value)"></label>
 <label>Lote final<input id=lf type=number min=1 inputmode=numeric value="${esc(F.fim)}" oninput="IMPRESSOES.set('fim',this.value)"></label></div>
 <p class=hint id=ul></p><p class=hint id=lt></p><p class=hint id=vl></p>
-<h3 class=sec>Dados da etiqueta <small style="font-weight:400;color:var(--mut)">(ficam salvos por produto neste aparelho)</small></h3>
+<h3 class=sec>Dados da etiqueta <small style="font-weight:400;color:var(--mut)">(descrição e validade ficam salvas por produto neste aparelho; o lastro volta sempre para 10 × 15 = 150)</small></h3>
 <div class=f><label>Descrição<textarea id=ds oninput="IMPRESSOES.set('desc',this.value)">${esc(F.desc)}</textarea></label></div>
 <div class=f><label>Qtd por lastro<input id=la type=number min=0 inputmode=numeric value="${esc(F.lastro)}" oninput="IMPRESSOES.set('lastro',this.value)"></label>
 <label>Altura (lastros)<input id=al type=number min=0 inputmode=numeric value="${esc(F.alt)}" oninput="IMPRESSOES.set('alt',this.value)"></label>
