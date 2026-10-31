@@ -15,7 +15,7 @@
 .etq .q .bcw{height:34%;margin-bottom:2mm}.etq .cd .bcw{height:30%;margin-top:3mm}.etq .lt .bcw{height:38%;margin-top:3mm}
 .etq .tu .cv{align-items:stretch;justify-content:space-around;padding:1mm 1.5mm;gap:1mm}
 .etq .tu .tl{display:flex;align-items:center;gap:1.5mm;font-size:5mm;flex:1}
-.etq .tu .tl i{flex:1;height:100%;max-height:6mm;border:.4mm solid #000;border-radius:1.2mm;background:#fff}
+.etq .tu .tl i{flex:1;height:100%;max-height:6mm;border:.4mm solid #000;border-radius:1.2mm;background:#fff;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:5.5mm;line-height:1}
 .etq .pl .cv{flex-direction:row;justify-content:space-between;padding:1mm 2mm;gap:2mm}
 .etq .pl .tx{font-size:3.2mm;line-height:1.5;text-align:left;font-weight:700;text-transform:uppercase;white-space:nowrap}
 .etq .pl svg{height:90%;width:auto;max-width:42%}
