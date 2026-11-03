@@ -7,7 +7,8 @@ const fmt=i=>{if(!i)return'';const [y,m,d]=i.split('-');return d+'/'+m+'/'+y.sli
 // Validade = fabricação + N dias (ex.: PF0005: 31/10/26 + 90 = 29/01/27; SP0118: 16/09/26 + 180 = 15/03/27)
 const DIAS={PF0005:90,SP0118:180}; // validade padrão (dias) por código; os demais começam com 90
 function validade(i,dias){if(!i)return'';const [y,m,d]=i.split('-').map(Number),a=new Date(y,m-1,d+dias);return a.getFullYear()+'-'+pad(a.getMonth()+1,2)+'-'+pad(a.getDate(),2)}
-const F={man:false,prod:null,qtd:150,fab:hoje(),dias:90,ordem:'',ini:1,fim:1,desc:'',lastro:10,alt:15};
+const POR_FOLHA=18; // cartões por folha da ficha de testes (3 colunas x 6 linhas)
+const F={pal:true,fic:true,man:false,prod:null,qtd:150,fab:hoje(),dias:90,ordem:'',ini:1,fim:1,desc:'',lastro:10,alt:15};
 let PR=[];
 const cur=()=>PR.find(p=>String(p.id)===String(F.prod));
 const dk=p=>'imp_'+(p.codigo||p.id);
@@ -32,6 +33,18 @@ return `<div class=etq>
 </div>`}
 function barras(el){el.querySelectorAll('svg.bc').forEach(s=>{try{JsBarcode(s,s.dataset.v,{format:'CODE128',displayValue:false,margin:0,width:2,height:60});
   const w=s.getAttribute('width'),h=s.getAttribute('height');if(!s.getAttribute('viewBox')&&w&&h)s.setAttribute('viewBox','0 0 '+parseFloat(w)+' '+parseFloat(h));s.removeAttribute('width');s.removeAttribute('height');s.setAttribute('preserveAspectRatio','none')}catch(e){}})}
+
+// Ficha de testes: um cartão por lote/sublote, 18 por folha A4 retrato; a última folha é completada com a sequência seguinte
+function fichaCard(n){const p=cur(),cod=p.codigo||'',tn=parseInt(S.turno)||0;
+return `<div class=tc><div class=tr>Produto:<b>${esc(cod)}</b></div>
+<div class="tr sm"><span style="flex:1">Lote:</span><span style="flex:1;border-left:.2mm solid #000;padding-left:1mm">SubLote:</span></div>
+<div class="tr lt"><div class=ln>${esc(F.ordem)}</div><div><div class=tt><span>Teste</span><span>1 &nbsp; :</span></div></div><div><div class=tt><span>Teste</span><span>2 &nbsp; :</span></div></div></div>
+<div class=tr>Fabricação:<b>${fmt(F.fab)}</b></div>
+<div class=tr>Turno<b>${tn?tn+'º':''}</b></div>
+<div class=tr>Pallet<b>${pad(n,2)}</b></div>
+<div class="tr ms">Mescla<span class=bl><i>R</i><i>C</i><i>B</i><i>F</i></span></div></div>`}
+function folhaFicha(ini){let h='';for(let i=0;i<POR_FOLHA;i++)h+=fichaCard(ini+i);return '<div class="pg fi"><div class=ft>'+h+'</div></div>'}
+function fichas(ini,fim){let o='';for(let k=ini;k<=fim;k+=POR_FOLHA)o+=folhaFicha(k);return o}
 const ANT={'1º turno':'3º turno','2º turno':'1º turno','3º turno':'2º turno'};
 // Próximo lote vem dos registros da transpaleteira (mesma conta da tela de pallets); lote inicial e final já começam nele
 function lote0(){const p=cur();if(!p||!S.PL||typeof pNx!=='function')return;const n=Number(pNx(p.id));if(n>0){F.ini=n;F.fim=n}}
@@ -42,6 +55,7 @@ function info(){const p=cur(),L=(S.PL&&S.PL.lista)||[],t=ANT[S.turno];if(!p||!t)
 function previa(){const w=document.getElementById('pw');if(!w||!cur())return;
   const n=Math.max(1,parseInt(F.ini)||1);w.innerHTML=etq(n);barras(w);
   const e=w.firstElementChild,k=Math.min(1,w.clientWidth/e.offsetWidth);e.style.transform='scale('+k+')';w.style.height=(e.offsetHeight*k)+'px';
+  const pf=document.getElementById('pf');if(pf){pf.innerHTML=folhaFicha(n);const g=pf.firstElementChild.firstElementChild,k=Math.min(1,pf.clientWidth/g.offsetWidth);g.style.transformOrigin='0 0';g.style.transform='scale('+k+')';pf.style.height=(g.offsetHeight*k)+'px'}
   const ul=document.getElementById('ul');if(ul)ul.innerHTML=info();const lt=document.getElementById('lt'),v=document.getElementById('vl'),tt=document.getElementById('tt');
   const fi=Math.max(n,parseInt(F.fim)||n);if(lt)lt.innerHTML=F.ordem?`Lote impresso: <b>${esc(F.ordem)}</b> · Sublotes: <b>${pad(n,2)}${fi>n?' a '+pad(fi,2):''}</b>`:'Informe o nº da ordem (é o lote impresso na etiqueta).';
   if(v)v.innerHTML=`Validade: <b>${fmt(validade(F.fab,Number(F.dias)||0))}</b>`;if(tt)tt.value=(Number(F.lastro)||0)*(Number(F.alt)||0)||''}
@@ -55,10 +69,17 @@ function imprimir(){const p=cur(),ini=parseInt(F.ini),fim=parseInt(F.fim),er=doc
   if(!F.fab)return er.textContent='Informe a data de fabricação.';
   if(!(ini>=1)||!(fim>=ini))return er.textContent='Informe o lote inicial e o lote final (o final não pode ser menor que o inicial).';
   if(fim-ini+1>500)return er.textContent='Máximo de 500 etiquetas por impressão.';
-  const f=document.getElementById('folhas');f.innerHTML='';for(let n=ini;n<=fim;n++)f.insertAdjacentHTML('beforeend','<div class=pg>'+etq(n)+'</div>');barras(f);
+  if(!F.pal&&!F.fic)return er.textContent='Marque pelo menos uma opção: Identificação de pallet ou Ficha de testes.';
+  const f=document.getElementById('folhas');f.innerHTML='';
+  if(F.pal)for(let n=ini;n<=fim;n++)f.insertAdjacentHTML('beforeend','<div class=pg>'+etq(n)+'</div>');
+  if(F.fic)f.insertAdjacentHTML('beforeend',fichas(ini,fim));
+  barras(f);
   setTimeout(()=>window.print(),150)}
 function draw(){const P=PR;
 A.innerHTML=head()+`<nav><button onclick="location.href='/'">Menu</button><button onclick="sair()">Sair</button></nav><main class=imp><h2>Impressões</h2>
+<h3 class=sec style="margin-top:6px">O que imprimir</h3>
+<div class=opc><label><input type=checkbox ${F.pal?'checked':''} onchange="IMPRESSOES.opt('pal',this.checked)">Identificação de pallet</label>
+<label><input type=checkbox ${F.fic?'checked':''} onchange="IMPRESSOES.opt('fic',this.checked)">Ficha de testes</label></div>
 <h3 class=sec style="margin-top:6px">Identificação de pallet</h3>
 <div class=f><label>Produto<select id=pr onchange="IMPRESSOES.troca(this.value)">${P.map(p=>`<option value="${p.id}" ${String(p.id)===String(F.prod)?'selected':''}>${esc((p.codigo?p.codigo+' - ':'')+p.nome)}</option>`).join('')}</select></label>
 <label>Quantidade<input id=qt type=number min=1 inputmode=numeric value="${esc(F.qtd)}" oninput="IMPRESSOES.set('qtd',this.value)"></label>
@@ -74,13 +95,15 @@ A.innerHTML=head()+`<nav><button onclick="location.href='/'">Menu</button><butto
 <label>Total por pallet<input id=tt readonly tabindex=-1></label>
 <label>Validade (dias)<input id=me type=number min=1 inputmode=numeric value="${esc(F.dias)}" oninput="IMPRESSOES.set('dias',this.value)"></label></div>
 <div class=acoes><button class=big onclick="IMPRESSOES.imprimir()">Imprimir</button><span class=er id=er></span></div>
-<h3 class=sec>Prévia <small style="font-weight:400;color:var(--mut)">(primeira etiqueta)</small></h3><div class=pw id=pw></div></main>`;
+<h3 class=sec>Prévia <small style="font-weight:400;color:var(--mut)">(primeira etiqueta)</small></h3><div class=pw id=pw></div>
+<h3 class=sec>Prévia da ficha de testes <small style="font-weight:400;color:var(--mut)">(primeira folha)</small></h3><div class=pw id=pf></div></main>`;
 previa()}
 // Atualiza sozinho (10 s): se o operador não mexeu no lote inicial/final, acompanha o próximo lote da transpaleteira
 async function refresca(){if(document.hidden||!document.getElementById('pw'))return;const L=await rpcQ('pallet_estado_v2');if(!L)return;S.PL=L;
   if(!F.man&&cur()){lote0();const a=document.getElementById('li'),b=document.getElementById('lf');if(a&&document.activeElement!==a)a.value=F.ini;if(b&&document.activeElement!==b)b.value=F.fim}previa()}
 setInterval(refresca,10000);
 window.addEventListener('resize',()=>{if(document.getElementById('pw'))previa()});
-window.IMPRESSOES={set,troca,imprimir,async load(){const L=(await rpcQ('pallet_estado_v2'))||await rpc('pallet_estado');S.PL=L;PR=((L&&L.produtos)||[]).slice();if(!PR.length){A.innerHTML=head()+`<nav><button onclick="location.href='/'">Menu</button><button onclick="sair()">Sair</button></nav><main><h2>Impressões</h2><p>Nenhum produto cadastrado.</p></main>`;return}
+function opt(k,v){F[k]=v}
+window.IMPRESSOES={set,opt,troca,imprimir,async load(){const L=(await rpcQ('pallet_estado_v2'))||await rpc('pallet_estado');S.PL=L;PR=((L&&L.produtos)||[]).slice();if(!PR.length){A.innerHTML=head()+`<nav><button onclick="location.href='/'">Menu</button><button onclick="sair()">Sair</button></nav><main><h2>Impressões</h2><p>Nenhum produto cadastrado.</p></main>`;return}
   if(!cur()){F.prod=PR[0].id;carrega(PR[0])}lote0();draw()}};
 })();
