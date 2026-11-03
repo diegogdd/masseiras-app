@@ -38,7 +38,7 @@ function barras(el){el.querySelectorAll('svg.bc').forEach(s=>{try{JsBarcode(s,s.
 function fichaCard(n){const p=cur(),cod=p.codigo||'',tn=parseInt(S.turno)||0;
 return `<div class=tc><div class=tr>Produto:<b>${esc(cod)}</b></div>
 <div class="tr sm"><span style="flex:1">Lote:</span><span style="flex:1;border-left:.2mm solid #000;padding-left:1mm">SubLote:</span></div>
-<div class="tr lt"><div class=ln>${esc(F.ordem)}</div><div><div class=tt><span>Teste</span><span>1 &nbsp; :</span></div></div><div><div class=tt><span>Teste</span><span>2 &nbsp; :</span></div></div></div>
+<div class="tr lt"><div class=ln>${esc(F.ordem)}</div><div><div class=tt><span>Teste 1</span><span> :</span></div></div><div><div class=tt><span>Teste 2</span><span> :</span></div></div></div>
 <div class=tr>Fabricação:<b>${fmt(F.fab)}</b></div>
 <div class=tr>Turno<b>${tn?tn+'º':''}</b></div>
 <div class=tr>Pallet<b>${pad(n,2)}</b></div>
