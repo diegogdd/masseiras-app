@@ -40,9 +40,9 @@ return `<div class=tc><div class=tr>Produto:<b>${esc(cod)}</b></div>
 <div class="tr sm"><span style="flex:1">Lote:</span><span style="flex:1;border-left:.2mm solid #000;padding-left:1mm">SubLote:</span></div>
 <div class="tr lt"><div class=ln>${esc(F.ordem)}</div><div><div class=tt><span>Teste 1</span><span> :</span></div></div><div><div class=tt><span>Teste 2</span><span> :</span></div></div></div>
 <div class=tr>Fabricação:<b>${fmt(F.fab)}</b></div>
-<div class=tr>Turno<b>${tn?tn+'º':''}</b></div>
-<div class=tr>Pallet<b>${pad(n,2)}</b></div>
-<div class="tr ms">Mescla<span class=bl><i>R</i><i>C</i><i>B</i><i>F</i></span></div></div>`}
+<div class=tr>Turno:<b>${tn?tn+'º':''}</b></div>
+<div class=tr>Pallet:<b>${pad(n,2)}</b></div>
+<div class="tr ms">Mescla:<span class=bl><i>R</i><i>C</i><i>B</i><i>F</i></span></div></div>`}
 function folhaFicha(ini){let h='';for(let i=0;i<POR_FOLHA;i++)h+=fichaCard(ini+i);return '<div class="pg fi"><div class=ft>'+h+'</div></div>'}
 function fichas(ini,fim){let o='';for(let k=ini;k<=fim;k+=POR_FOLHA)o+=folhaFicha(k);return o}
 const ANT={'1º turno':'3º turno','2º turno':'1º turno','3º turno':'2º turno'};
