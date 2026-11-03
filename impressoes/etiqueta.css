@@ -54,10 +54,11 @@
 .ft .tr.lt>div{flex:1;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.8mm}
 .ft .tr.lt>div+div{border-left:.2mm solid #000}
 .ft .tr.lt .ln{font-weight:700;font-size:3.2mm}
-.ft .tr.lt .tt{align-items:stretch;flex-direction:column;justify-content:flex-start;padding-top:.6mm;font-size:2.4mm}
+.ft .tr.lt .tt{align-items:stretch;flex-direction:column;justify-content:flex-start;padding-top:.8mm;font-size:3mm}
 .ft .tr.lt .tt span{display:block;text-align:center}
 .ft .tr.ms{flex:1.7;justify-content:space-between}
 .ft .tr.ms .bl{display:flex;flex:1;justify-content:space-around;align-items:center}
 .ft .tr.ms .bl i{font-style:normal;font-weight:700;font-size:3.4mm;width:7.5mm;height:7.5mm;border:.3mm solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .ft .tr.pl2{flex:1}
 .imp .opc{display:flex;gap:22px;flex-wrap:wrap;margin:8px 0}.imp .opc label{display:flex;flex-direction:row;align-items:center;gap:10px;font-weight:600;font-size:18px}.imp .opc input{width:26px;height:26px;min-height:0;flex:none}
+.ft .tr.lt>div{align-items:flex-start}.ft .tr.lt>.ln{align-items:center}.ft .tr.lt .tt{width:100%;padding-top:1mm}
