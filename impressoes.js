@@ -3,6 +3,8 @@
 (function(){
 const pad=(n,l)=>String(n).padStart(l,'0');
 const hoje=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1,2)+'-'+pad(d.getDate(),2)};
+// Data de fabricação padrão: no 3º turno, a partir das 21:00 já conta como o dia seguinte; até 06:30 da madrugada segue o dia corrente (mesmo dia de produção)
+function dataFab(){const d=new Date(),m=d.getHours()*60+d.getMinutes();if(typeof S!=='undefined'&&S&&S.turno==='3º turno'&&m>=21*60)d.setDate(d.getDate()+1);return d.getFullYear()+'-'+pad(d.getMonth()+1,2)+'-'+pad(d.getDate(),2)}
 const fmt=i=>{if(!i)return'';const [y,m,d]=i.split('-');return d+'/'+m+'/'+y.slice(2)};
 // Validade = fabricação + N dias (ex.: PF0005: 31/10/26 + 90 = 29/01/27; SP0118: 16/09/26 + 180 = 15/03/27)
 const DIAS={PF0005:90,SP0118:180}; // validade padrão (dias) por código; os demais começam com 90
@@ -37,12 +39,12 @@ function barras(el){el.querySelectorAll('svg.bc').forEach(s=>{try{JsBarcode(s,s.
 // Ficha de testes: um cartão por lote/sublote, 18 por folha A4 retrato; a última folha é completada com a sequência seguinte
 function fichaCard(n){const p=cur(),cod=p.codigo||'',tn=parseInt(S.turno)||0;
 return `<div class=tc><div class=tr>Produto:<b>${esc(cod)}</b></div>
-<div class="tr sm"><span style="flex:1">Lote:</span><span style="flex:1;border-left:.2mm solid #000;padding-left:11mm">SubLote:</span></div>
-<div class="tr lt"><div class=ln>${esc(F.ordem)}</div><div><div class=tt><span>Teste 1</span><span> :</span></div></div><div><div class=tt><span>Teste 2</span><span> :</span></div></div></div>
+<div class="tr sm"><span style="flex:1">Lote:</span><span style="flex:1;border-left:.2mm solid #000;padding-left:1mm">SubLote:</span></div>
+<div class="tr lt"><div class=ln>${esc(F.ordem)}</div><div><div class=tt><span>Teste 1 :</span></div></div><div><div class=tt><span>Teste 2 :</span></div></div></div>
 <div class=tr>Fabricação:<b>${fmt(F.fab)}</b></div>
-<div class=tr>Turno:<b>${tn?tn+'º':''}</b></div>
-<div class=tr>Pallet:<b>${pad(n,2)}</b></div>
-<div class="tr ms">Mescla:<span class=bl><i>R</i><i>C</i><i>B</i><i>F</i></span></div></div>`}
+<div class=tr>Turno<b>${tn?tn+'º':''}</b></div>
+<div class=tr>Pallet<b>${pad(n,2)}</b></div>
+<div class="tr ms">Mescla<span class=bl><i>R</i><i>C</i><i>B</i><i>F</i></span></div></div>`}
 function folhaFicha(ini){let h='';for(let i=0;i<POR_FOLHA;i++)h+=fichaCard(ini+i);return '<div class="pg fi"><div class=ft>'+h+'</div></div>'}
 function fichas(ini,fim){let o='';for(let k=ini;k<=fim;k+=POR_FOLHA)o+=folhaFicha(k);return o}
 const ANT={'1º turno':'3º turno','2º turno':'1º turno','3º turno':'2º turno'};
@@ -59,9 +61,10 @@ function previa(){const w=document.getElementById('pw');if(!w||!cur())return;
   const ul=document.getElementById('ul');if(ul)ul.innerHTML=info();const lt=document.getElementById('lt'),v=document.getElementById('vl'),tt=document.getElementById('tt');
   const fi=Math.max(n,parseInt(F.fim)||n);if(lt)lt.innerHTML=F.ordem?`Lote impresso: <b>${esc(F.ordem)}</b> · Sublotes: <b>${pad(n,2)}${fi>n?' a '+pad(fi,2):''}</b>`:'Informe o nº da ordem (é o lote impresso na etiqueta).';
   if(v)v.innerHTML=`Validade: <b>${fmt(validade(F.fab,Number(F.dias)||0))}</b>`;if(tt)tt.value=(Number(F.lastro)||0)*(Number(F.alt)||0)||''}
-function set(k,v){F[k]=v;if(k==='ini'||k==='fim')F.man=true;if(['desc','dias'].includes(k))guarda();previa()}
+function set(k,v){F[k]=v;if(k==='fab')F.fabMan=true;if(k==='ini'||k==='fim')F.man=true;if(['desc','dias'].includes(k))guarda();previa()}
 async function troca(id){F.prod=id;F.man=false;carrega(cur());const L=await rpcQ('pallet_estado_v2');if(L)S.PL=L;lote0();const g=x=>document.getElementById(x);g('li').value=F.ini;g('lf').value=F.fim;g('ds').value=F.desc;g('la').value=F.lastro;g('al').value=F.alt;g('me').value=F.dias;previa()}
 function imprimir(){const p=cur(),ini=parseInt(F.ini),fim=parseInt(F.fim),er=document.getElementById('er');er.textContent='';
+  if(!F.fabMan){F.fab=dataFab();const fa=document.getElementById('fa');if(fa)fa.value=F.fab}
   if(!p)return er.textContent='Escolha o produto.';
   if(!p.codigo)return er.textContent='Este produto ainda não tem código cadastrado (Administrador > Produtos e códigos).';
   if(!String(F.ordem).trim())return er.textContent='Informe o número da ordem.';
@@ -105,5 +108,5 @@ setInterval(refresca,10000);
 window.addEventListener('resize',()=>{if(document.getElementById('pw'))previa()});
 function opt(k,v){F[k]=v}
 window.IMPRESSOES={set,opt,troca,imprimir,async load(){const L=(await rpcQ('pallet_estado_v2'))||await rpc('pallet_estado');S.PL=L;PR=((L&&L.produtos)||[]).slice();if(!PR.length){A.innerHTML=head()+`<nav><button onclick="location.href='/'">Menu</button><button onclick="sair()">Sair</button></nav><main><h2>Impressões</h2><p>Nenhum produto cadastrado.</p></main>`;return}
-  if(!cur()){F.prod=PR[0].id;carrega(PR[0])}lote0();draw()}};
+  if(!cur()){F.prod=PR[0].id;carrega(PR[0])}lote0();F.fab=dataFab();draw()}};
 })();
