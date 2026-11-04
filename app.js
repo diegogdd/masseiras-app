@@ -159,7 +159,7 @@ c.toBlob(b=>b?ok(b):ko(new Error('Falha ao gerar a imagem')),'image/png')})}
 function baixaImg(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
 async function compartilhaR(){const p=payloadR();let b;try{b=await imgR(p)}catch(e){return alert('Não foi possível gerar a imagem do report.')}
 salvaR(1).catch(()=>{});const n='Report_producao_'+p.data+'_'+p.turno.replace(/\W/g,'')+'.png',f=new File([b],n,{type:'image/png'});
-if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Report de produção JBT'});return}catch(e){if(e&&e.name==='AbortError')return}}
+if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Report de produção JBT',text:fd(p.data)});return}catch(e){if(e&&e.name==='AbortError')return}}
 baixaImg(b,n);alert('Este aparelho não abriu o compartilhamento. A imagem foi baixada: envie pelo WhatsApp a partir da galeria.')}
 // ---- Leitura do código de barras pela câmera (nº da ordem) ----
 const ZXURL='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
