@@ -209,7 +209,7 @@ if(!x.ok)return alert('Não foi possível gerar o Excel: '+await x.text());const
 // ---- Ordens do 1º turno: planejado de pacotes + lote inicial por produto (líder) e aviso do coletor (transpaleteira) ----
 // Cada lote/pallet = 150 pacotes (como na planilha Controle de Apontamento). O lote que NÃO pode ser lançado no coletor é o primeiro
 // cuja soma acumulada alcança o planejado (lançá-lo fecharia a ordem sozinha). O aviso aparece ao registrar o pallet anterior a ele e nos 5 seguintes.
-const PCT_PALLET=150,AVISO_EXTRA=5,ordNorm=r=>(r||[]).map(o=>({pid:o.produto_id,plan:o.planejado,lote:o.lote_inicial,nome:o.codigo||o.produto||''}));
+const PCT_PALLET=150,AVISO_EXTRA=4,ordNorm=r=>(r||[]).map(o=>({pid:o.produto_id,plan:o.planejado,lote:o.lote_inicial,nome:o.codigo||o.produto||''}));
 const ordStop=o=>o.lote+Math.ceil(o.plan/PCT_PALLET)-1;
 async function ordFetch(){if(S.turno!=='1º turno')return [];const r=await rpcQ('ordens_listar');return r?ordNorm(r):(S.PO||[])}
 async function ordLoad(){if(S.perfil!=='lider'||S.turno!=='1º turno')return;const r=await rpcQ('ordens_listar');S.OLok=!!r;S.OL=r?ordNorm(r):(S.OL||[])}
