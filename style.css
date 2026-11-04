@@ -109,3 +109,11 @@ main.tr{flex:1;width:100%;max-width:640px;display:flex;flex-direction:column;pad
 /* Transpaleteira: turno em destaque (amarelo, grande) no topo */
 header .turno{font-size:clamp(26px,7.5vw,42px);font-weight:700;text-transform:uppercase;letter-spacing:1px;line-height:1.1;color:#ffd400;background:#14202b;padding:3px 14px;border-radius:8px}
 body:has(.tr) header .turno{font-size:clamp(26px,7.5vw,42px)}
+
+/* Ordens do 1º turno (líder) e aviso do coletor (transpaleteira) */
+.ord{background:var(--card);border:2px solid var(--bd);border-radius:12px;padding:10px 14px;margin-bottom:12px}.ord small{color:var(--mut);font-size:16px}
+.pav{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto}
+.pavc{background:var(--card);border:4px solid var(--run);border-radius:18px;padding:18px;max-width:560px;width:100%;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;margin:auto}
+.pavc img{max-height:46vh;max-width:100%;object-fit:contain;border-radius:12px}
+.pavm{font-size:30px;font-weight:700;line-height:1.2}.pavm b{color:var(--run);font-size:46px}.pavs{font-size:20px;color:var(--er);font-weight:600}
+.pavc .big{min-width:260px}

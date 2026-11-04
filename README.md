@@ -66,3 +66,9 @@ A geração roda em uma função da Vercel (`api/excel.py`); o arquivo `requirem
 - **Massas** contam a partir de **05/10/2026**.
 - **Pacotes** contam só a partir de **28/10/2026** (antes o embalamento não estava no sistema). Eles vêm dos pallets da transpaleteira, com ranking de melhor e pior dia, média diária, pacotes por produto e pacotes por massa.
 - Instalação: rode `supabase/migracao-gestor.sql` no SQL Editor do Supabase (não mexe no login nem nos usuários existentes). Para trocar a senha, use o `update` que está comentado no começo do arquivo.
+
+## Ordens do 1º turno e aviso do coletor
+- No `/lider` do **1º turno**, na mesma tela da meta, a seção **Ordens do turno** permite informar, por produto, o **planejado da ordem (pacotes)** e o **lote inicial** (como na planilha Controle de Apontamento). Dá para adicionar mais de um produto; clique em **Salvar ordens**.
+- Cada lote/pallet vale 150 pacotes. O lote que **não pode ser lançado no coletor** é o primeiro cuja soma alcança o planejado (ex.: lote 10 e 450 pacotes → não lançar a partir do lote 12).
+- Na `/transpaleteira` do **1º turno**, ao registrar o pallet (tipo PA) anterior a esse lote, aparece no meio da tela a foto do coletor (`img/coletor.jpg`) com **"A partir do lote X não lance no coletor"** e o botão **CIENTE**. O aviso se repete nos 5 pallets seguintes e depois para. As ordens também ficam resumidas no topo da tela.
+- Outros turnos não mudam. Instalação: rode `supabase/migracao-ordens-pacotes.sql` no SQL Editor do Supabase.

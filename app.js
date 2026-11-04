@@ -28,7 +28,7 @@ function metaBar(){return metaHtml(S.E.meta,done().length,'META: a definir pelo 
 const pacLbl=pk=>pk.real?(pk.fechado?'entregues à expedição':'entregues até agora (transpaleteira em aberto)'):'estimado (massas × 60)';
 async function pacDia(data,turno,massas){if(S.perfil!=='lider')return null;const R=await rpcQ('pallets_resumo',{p_data:data}),E=entTurno(R,data,turno);if(!E)return{tot:massas*60,real:false};return{tot:Object.values(E.m).reduce((x,y)=>x+y,0),real:true,fechado:!!(E.enc&&E.enc.fechado)}}
 const stats=(m,pk)=>`${pk?`<div class=duo><div><p>Total de massas</p><div class=tot>${m.t}</div></div><div><p>Total de pacotes</p><div class=tot>${Number(pk.tot).toLocaleString('pt-BR')}</div><small>${pacLbl(pk)}</small></div></div>`:`<p>Total de massas</p><div class=tot>${m.t}</div>`}${Object.entries(m.p).map(([k,v])=>`<div class=kv><span>Massas ${esc(k)}</span><b>${v}</b></div>`).join('')}<div class=kv><span>Média massa/hora</span><b>${m.h}</b></div><div class=kv><span>Média temperatura total</span><b>${m.tp}</b></div><div class=kv><span>Reprocesso Congelado</span><b>${m.c}</b></div>${Object.entries(m.cp).map(([k,v])=>`<div class=kv style="padding-left:28px;font-size:19px;opacity:.8"><span>${esc(k)}</span><b>${v}</b></div>`).join('')}<div class=kv><span>Reprocesso Linha</span><b>${m.l}</b></div>`;
-const metaForm=()=>S.perfil==='lider'?`<div class=f><label>Meta do dia (massas)<input type=number min=0 id=mt value="${S.E.meta??''}"></label><button class=big onclick=salvameta()>Salvar meta</button></div>`:''
+const metaForm=()=>S.perfil==='lider'?`<div class=f><label>Meta do dia (massas)<input type=number min=0 id=mt value="${S.E.meta??''}"></label><button class=big onclick=salvameta()>Salvar meta</button></div>${ordensForm()}`:''
 const V={
 login(){A.innerHTML=`<main class=c><h1>Controles da JBT</h1><h2>${window.PAGINA==='impressoes'?'Impressões':NOMES[PERFIL]}</h2>${['admin','farinha','gestor'].includes(PERFIL)?'':`<label>Turno<select id=t>${TURNOS.map(t=>`<option>${t}</option>`).join('')}</select></label>`}<label>Senha<input id=p type=password autocomplete=off></label><button class=big onclick=ent()>Entrar</button><p class=er id=er></p></main>`},
 async home(){await load();const fc=S.E.fechando;A.innerHTML=head()+nav()+(fc&&!S.E.dia?`<div class=ctr><p><b>Produção deste turno encerrada.</b><br>Aguardando o próximo turno finalizar ${fc.batendo} massa${fc.batendo==1?'':'s'} que ainda ${fc.batendo==1?'está':'estão'} batendo.</p></div>`:`<div class=ctr><button class=big onclick=inicia()>${S.E.dia?'CONTINUAR PRODUÇÃO DE HOJE':'INICIAR PRODUÇÃO DE HOJE'}</button></div>`)},
@@ -42,7 +42,7 @@ else if(st==3){const oc=n=>(S.E.diosnas_ocupadas||[]).includes(n)||S.E.bateladas
 else{h=`<h2>Operador responsável</h2><label>Nome<input id=op value="${esc(w.op)}" oninput="S.w.op=this.value" autocomplete=off></label><div class=foot><button class=big onclick=iniciaB()>Continuar</button></div><p class=er id=er></p>`}
 A.innerHTML=head()+`<main>${h}<div class=foot><button onclick="S.w=null;go('main')">Cancelar batelada</button></div></main>`},
 fim(){const w=S.w;A.innerHTML=head()+`<main><h2>Fim da Batelada</h2><p>Hora fim: <b>${hm(w.fim)}</b></p><p>Temperatura da massa</p><div class=tv><span id=tv>${w.temp||'0'}</span> ºC</div><div class=kp>${[7,8,9,4,5,6,1,2,3,',',0,'⌫'].map(k=>`<button onclick="key('${k}')">${k}</button>`).join('')}</div><div class=foot><button class=big onclick=ok()>Confirmar fim da batelada</button><button onclick="S.w=null;go('main')">Voltar</button></div><p class=er id=er></p></main>`},
-async resumo(){await load();const d=S.E.dia;if(!d&&S.E.fechando){await resumoFechando();return}
+async resumo(){await load();await ordLoad();const d=S.E.dia;if(!d&&S.E.fechando){await resumoFechando();return}
 if(!d){A.innerHTML=head()+nav()+`<main>${metaBar()}${metaForm()}<h2>Produção do Dia</h2><p>Nenhuma produção em andamento neste turno.</p></main>`;return}
 const m=sum(done()),pk=await pacDia(d.data,d.turno,m.t);A.innerHTML=head()+nav()+`<main>${metaBar()}${metaForm()}<h2>Produção do Dia</h2>${stats(m,pk)}${S.fin?`<div class=foot><button class=big onclick=encerra()>Encerrar meu turno</button><button onclick="go('main')">Voltar</button></div>`:''}${S.perfil==='lider'?`<h3>Bateladas</h3>${tabela(S.E.bateladas.slice().reverse(),1)}`:''}</main>`},
 async hist(){S.H=await rpc('historico');S.PR=await rpcQ('pallets_resumo');if(S.perfil==='admin')S.PD=await rpc('admin_pallets_dias');if(!S.E&&S.perfil!=='admin')await load();drawHist()},
@@ -57,7 +57,7 @@ if(!S.rd||!H.some(x=>x.id==S.rd))S.rd=H[0].id;const r=await rpc('report_dia',{p_
 async geral(){if(S.perfil!=='lider'||S.turno!=='1º turno')return go(home0());if(!S.rgd){const d=new Date(Date.now()-864e5);S.rgd=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 const g=await rpc('report_geral',{p_data:S.rgd}),PR=await rpcQ('pallets_resumo',{p_data:S.rgd});g.turnos.forEach(t=>{if(t.dados)t.dados.ent=entTurno(PR,S.rgd,t.turno)});const b=geralBase(g);S.RG={g,m:(g.salvo&&g.salvo.m)||b.m,avisos:b.avisos,salvo:!!(g.salvo&&g.salvo.m)};drawGeral()},
 async impressoes(){if(S.perfil!=='transpaleteira'||window.PAGINA!=='impressoes')return go(home0());await IMPRESSOES.load()},
-async pallet(){if(S.perfil!=='transpaleteira'||window.PAGINA==='impressoes')return go(home0());S.PL=(await rpcQ('pallet_estado_v2'))||await rpc('pallet_estado');S.PE=await rpc('pallet_turno_estado');drawPallet()},
+async pallet(){if(S.perfil!=='transpaleteira'||window.PAGINA==='impressoes')return go(home0());S.PL=(await rpcQ('pallet_estado_v2'))||await rpc('pallet_estado');S.PE=await rpc('pallet_turno_estado');S.PO=await ordFetch();drawPallet()},
 async farinha(){S.F=await rpc('farinha_estado');S.FM=await fetchMassas();drawFarinha()},
 async gestor(){if(S.perfil!=='gestor')return go(home0());await GESTOR.load()},
 async admin(){S.AD=await rpc('admin_listar');S.RH=await rpc('admin_rh');drawAdmin()}};
@@ -206,13 +206,36 @@ async function gBaixa(){gSync();const m=S.RG.m,ex=GSEC.filter(([k,,,cap])=>k!=='
 if(ex.length&&!confirm('Há mais linhas do que o modelo comporta em: '+ex.join(', ')+'. As linhas extras não vão para o Excel. Baixar mesmo assim?'))return;
 await gSalva(1);let x;try{x=await fetch('/api/report_geral',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:S.rgd,m})})}catch(e){return alert('Não foi possível gerar o Excel.')}
 if(!x.ok)return alert('Não foi possível gerar o Excel: '+await x.text());const b=await x.blob(),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='Report_do_dia_anterior_'+S.rgd+'.xlsx';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+// ---- Ordens do 1º turno: planejado de pacotes + lote inicial por produto (líder) e aviso do coletor (transpaleteira) ----
+// Cada lote/pallet = 150 pacotes (como na planilha Controle de Apontamento). O lote que NÃO pode ser lançado no coletor é o primeiro
+// cuja soma acumulada alcança o planejado (lançá-lo fecharia a ordem sozinha). O aviso aparece ao registrar o pallet anterior a ele e nos 5 seguintes.
+const PCT_PALLET=150,AVISO_EXTRA=5,ordNorm=r=>(r||[]).map(o=>({pid:o.produto_id,plan:o.planejado,lote:o.lote_inicial,nome:o.codigo||o.produto||''}));
+const ordStop=o=>o.lote+Math.ceil(o.plan/PCT_PALLET)-1;
+async function ordFetch(){if(S.turno!=='1º turno')return [];const r=await rpcQ('ordens_listar');return r?ordNorm(r):(S.PO||[])}
+async function ordLoad(){if(S.perfil!=='lider'||S.turno!=='1º turno')return;const r=await rpcQ('ordens_listar');S.OLok=!!r;S.OL=r?ordNorm(r):(S.OL||[])}
+function ordDica(o){if(!(o.plan>0)||!(o.lote>=1))return '';const st=ordStop(o),n=Math.ceil(o.plan/PCT_PALLET);return (st>o.lote?'Último lote a lançar no coletor: <b>'+(st-1)+'</b> · ':'')+'a partir do lote <b>'+st+'</b> não lançar ('+o.plan+' pacotes = '+n+' pallet'+(n==1?'':'s')+' de '+PCT_PALLET+')'}
+function ordHtml(){const L=S.OL||[],P=(S.E&&S.E.produtos)||[];if(S.OLok===false)return '<div class=balao>Recurso indisponível: rode o arquivo <b>supabase/migracao-ordens-pacotes.sql</b> no SQL Editor do Supabase.</div>';
+return `<p><small style="color:var(--mut)">Para cada produto do dia, informe o planejado da ordem (pacotes) e o lote em que vai começar. A transpaleteira recebe o aviso de qual lote não lançar mais no coletor.</small></p>${L.map((o,i)=>`<div class=ord><div class=f><label>Produto<select onchange="ordSet(${i},'pid',this.value)">${(P.some(p=>p.id===o.pid)?P:P.concat([{id:o.pid,nome:o.nome||('Produto '+o.pid)}])).map(p=>`<option value=${p.id} ${p.id===o.pid?'selected':''}>${esc(p.nome)}</option>`).join('')}</select></label><label>Planejado da ordem (pacotes)<input type=number min=1 inputmode=numeric value="${o.plan??''}" oninput="ordSet(${i},'plan',this.value)"></label><label>Lote inicial<input type=number min=1 inputmode=numeric value="${o.lote??''}" oninput="ordSet(${i},'lote',this.value)"></label><button class=perigo onclick="ordRem(${i})">Remover</button></div><small id=ordh${i}>${ordDica(o)}</small></div>`).join('')||'<p>Nenhuma ordem informada ainda.</p>'}<div class=foot><button onclick=ordAdd()>+ Adicionar produto</button><button class=big onclick=ordSalva()>Salvar ordens</button></div>`}
+const ordensForm=()=>S.perfil==='lider'&&S.turno==='1º turno'?`<h3>Ordens do turno (planejado e lote inicial)</h3><div id=ordx>${ordHtml()}</div>`:'';
+function ordDraw(){const e=document.getElementById('ordx');if(e)e.innerHTML=ordHtml()}
+function ordAdd(){const P=(S.E&&S.E.produtos)||[];S.OL=S.OL||[];S.OL.push({pid:(P[0]||{}).id,plan:'',lote:''});ordDraw()}
+function ordRem(i){S.OL.splice(i,1);ordDraw()}
+function ordSet(i,k,v){const o=S.OL[i];o[k]=v===''?'':parseInt(v);const h=document.getElementById('ordh'+i);if(h)h.innerHTML=ordDica(o)}
+async function ordSalva(){const L=S.OL||[];for(const o of L){if(!(o.pid>0))return alert('Escolha o produto de cada ordem.');if(!(o.plan>0))return alert('Informe o planejado (pacotes) de cada ordem.');if(!(o.lote>=1))return alert('Informe o lote inicial de cada ordem.')}
+await rpc('ordens_salvar',{p_itens:L.map(o=>({produto_id:o.pid,planejado:o.plan,lote_inicial:o.lote}))});S.OLok=true;alert('Ordens salvas. A transpaleteira do 1º turno já recebe os avisos.')}
+function pOrdens(){const L=S.PO||[];return `<div id=pord>${L.length?`<div class=balao><b>Ordens do turno (informadas pelo líder):</b>${L.map(o=>`<div>${esc(o.nome)}: planejado <b>${o.plan.toLocaleString('pt-BR')}</b> pacotes · começa no lote ${o.lote} · <b>a partir do lote ${ordStop(o)} não lançar no coletor</b></div>`).join('')}</div>`:''}</div>`}
+async function pAviso(pid,lote,tipo){if(S.turno!=='1º turno'||tipo!=='PA')return;S.PO=await ordFetch();
+const c=(S.PO||[]).filter(o=>o.pid===pid&&o.lote<=lote).sort((a,b)=>b.lote-a.lote)[0];if(!c)return;
+const st=ordStop(c),ini=Math.max(c.lote,st-1),fim=st-1+AVISO_EXTRA;if(lote<ini||lote>fim)return;
+const o=document.getElementById('pav');if(o)o.remove();const d=document.createElement('div');d.id='pav';d.className='pav';
+d.innerHTML=`<div class=pavc><img src="/img/coletor.jpg" alt="Coletor"><div class=pavm>A partir do lote <b>${st}</b> não lance no coletor</div>${lote>=st?`<div class=pavs>O lote ${lote} que você acabou de registrar também não deve ser lançado.</div>`:''}<button class=big onclick="document.getElementById('pav').remove()">CIENTE</button></div>`;document.body.appendChild(d)}
 // ---- Transpaleteira: pallets entregues à expedição (ficha FM-000082) ----
 const LETRAS=[['C','Coopavel'],['B','Bunge'],['R','Realta'],['F','Frísia'],['RO','Roseflor']];
 const hhmm=()=>{const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 function drawPallet(){const P=S.PL,f=S.PF=S.PF||{},u=P.ultimo||{};
 f.produto=f.produto??u.produto_id??(P.produtos[0]||{}).id;f.letra=f.letra??u.letra??'C';f.tipo=f.tipo||'PA';f.resp=f.resp??u.responsavel??'';f.letras=f.letras||String(f.letra||'C').split('/').filter(Boolean).slice(0,2);
 A.innerHTML=head()+`<nav><button onclick="sair()">Sair</button></nav><main><div class=pth><h2>Entrega de pallets à expedição</h2>${pTotal()}</div>
-<p>Dia de produção <b>${fd(P.data)}</b>.<br><small style="color:var(--mut)">O sistema se atualiza sozinho a cada 10 segundos.</small></p>${S.PLmsg?`<div class=balao>${esc(S.PLmsg)}</div>`:''}${S.PE&&S.PE.encerrado?`<div class=balao>Turno encerrado às ${hm(S.PE.em)}. Se registrar outro pallet, o turno volta a ficar aberto para o líder.</div>`:''}
+<p>Dia de produção <b>${fd(P.data)}</b>.<br><small style="color:var(--mut)">O sistema se atualiza sozinho a cada 10 segundos.</small></p>${pOrdens()}${S.PLmsg?`<div class=balao>${esc(S.PLmsg)}</div>`:''}${S.PE&&S.PE.encerrado?`<div class=balao>Turno encerrado às ${hm(S.PE.em)}. Se registrar outro pallet, o turno volta a ficar aberto para o líder.</div>`:''}
 <div class=f><label>Produto<select id=pp onchange="pProd(this.value)">${P.produtos.map(p=>`<option value=${p.id} ${p.id===f.produto?'selected':''}>${esc((p.codigo?p.codigo+' - ':'')+p.nome)}</option>`).join('')}</select></label>
 <label><span>Lote do pallet <small id=pnh>${pDica(pNx(f.produto))}</small></span><input id=pn type=number min=1 step=1 inputmode=numeric value="${pNx(f.produto)}" oninput="this.dataset.m=1"></label>
 <label>Horário<input id=ph type=time value="${hhmm()}" oninput="this.dataset.m=1"></label>
@@ -243,7 +266,7 @@ const pid=parseInt(g('pp').value),lote=parseInt(g('pn').value),n0=pNx(pid),v2=!!
 if(v2&&lote<n0&&!confirm('Este produto já chegou ao lote '+(n0-1)+' hoje. Registrar o lote '+lote+' mesmo assim?'))return;
 const a={p_produto:pid,p_horario:g('ph').value,p_qtd:parseInt(g('pq').value)||0,p_letra:letraSel(),p_resp:resp,p_tipo:f.tipo,p_obs:g('po').value};if(v2)a.p_lote=lote;
 const n=await rpc(v2?'pallet_registrar_v2':'pallet_registrar',a);
-f.produto=parseInt(g('pp').value);f.letra=letraSel();f.resp=resp;f.tipo='PA';S.PLmsg='Pallet '+n+' registrado às '+g('ph').value+'.';R()}
+f.produto=parseInt(g('pp').value);f.letra=letraSel();f.resp=resp;f.tipo='PA';S.PLmsg='Pallet '+n+' registrado às '+g('ph').value+'.';R();pAviso(pid,lote,a.p_tipo)}
 async function pEncerra(){if(!confirm('Encerrar o seu turno? O líder vai ver que não entram mais pallets deste turno.'))return;await rpc('pallet_encerrar');S.PLmsg='Turno encerrado. O líder já pode fechar o report.';R()}
 async function pDesfaz(){if(!confirm('Desfazer o último pallet lançado neste turno?'))return;await rpc(S.PL&&S.PL.proximos?'pallet_desfazer_v2':'pallet_desfazer');S.PLmsg='Último pallet desfeito.';R()}
 async function baixaP(data){const d=await rpc('admin_pallets_dia',{p_data:data});let x;try{x=await fetch('/api/pallets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})}catch(e){return alert('Não foi possível gerar o Excel.')}
@@ -325,7 +348,7 @@ function pHora(){if(PERFIL!=='transpaleteira'||S.v!=='pallet'||!S.token)return;c
 let pBusy=false;
 async function pAtualiza(){if(PERFIL!=='transpaleteira'||S.v!=='pallet'||!S.token||pBusy||document.hidden)return;pBusy=true;
   try{const L=(await rpcQ('pallet_estado_v2'))||(await rpcQ('pallet_estado')),E=await rpcQ('pallet_turno_estado');if(!L||S.v!=='pallet')return;S.PL=L;if(E)S.PE=E;
-    const t=document.querySelector('.ptot'),w=document.getElementById('ptab');if(t)t.outerHTML=pTotal();if(w)w.innerHTML=pTab();
+    const t=document.querySelector('.ptot'),w=document.getElementById('ptab');if(t)t.outerHTML=pTotal();if(w)w.innerHTML=pTab();S.PO=await ordFetch();const po=document.getElementById('pord');if(po)po.outerHTML=pOrdens();
     const n=document.getElementById('pn'),h=document.getElementById('pnh');if(n&&!n.dataset.m&&document.activeElement!==n){n.value=pNx(S.PF.produto);if(h)h.textContent=pDica(pNx(S.PF.produto))}
   }catch(e){}finally{pBusy=false}}
 function pTick(){pHora();pAtualiza()}
