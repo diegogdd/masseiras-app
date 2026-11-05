@@ -28,7 +28,7 @@ function calc(G,per){const hoje=G.hoje,ini0=per?add(hoje,-(per-1)):MINI,ini=ini0
   const sem=DOW.map((nome,i)=>{const l=ok.filter(x=>dow(x.data)===i);return{i,nome,qtd:l.length,media:l.length?sm(l,x=>x.tot)/l.length:0}}),sc=sem.filter(x=>x.qtd>0);
   const sbest=sc.length>=2?sc.reduce((a,b)=>b.media>a.media?b:a):null,sworst=sc.length>=2?sc.reduce((a,b)=>b.media<a.media?b:a):null;
   const tr=TUR.map((nome,i)=>{const l=rows.filter(d=>d.turno===nome&&d.massas>0&&(d.status==='encerrado'||d.data<lim)),m=sm(l,x=>x.massas),lh=l.filter(x=>Number(x.horas)>0),h=sm(lh,x=>Number(x.horas)),lt=l.filter(x=>x.temp!=null),lm=l.filter(x=>x.meta!=null);
-    return{nome,i,dias:l.length,massas:m,media:l.length?m/l.length:0,mh:h>0?sm(lh,x=>x.massas)/h:null,temp:lt.length?sm(lt,x=>Number(x.temp)*x.massas)/sm(lt,x=>x.massas):null,meta:lm.length&&sm(lm,x=>x.meta)>0?sm(lm,x=>x.massas)/sm(lm,x=>x.meta)*100:null,rep:m?sm(l,x=>x.rep_cong+x.rep_linha)/m*100:null}});
+    return{nome,i,l,dias:l.length,massas:m,media:l.length?m/l.length:0,mh:h>0?sm(lh,x=>x.massas)/h:null,temp:lt.length?sm(lt,x=>Number(x.temp)*x.massas)/sm(lt,x=>x.massas):null,meta:lm.length&&sm(lm,x=>x.meta)>0?sm(lm,x=>x.massas)/sm(lm,x=>x.meta)*100:null,rep:m?sm(l,x=>x.rep_cong+x.rep_linha)/m*100:null}});
   const prod={};rows.forEach(d=>Object.entries(d.por_produto||{}).forEach(([p,c])=>prod[p]=(prod[p]||0)+Number(c)));
   const hr=Array.from({length:24},(_,h)=>({h,t:[0,0,0]}));(G.horas||[]).filter(x=>x.data>=ini).forEach(x=>{const i=TUR.indexOf(x.turno);if(i>=0&&hr[x.hora])hr[x.hora].t[i]+=Number(x.n)});
   return{ini,dd,ok,media,top,bot,sem,sbest,sworst,tr,prod,hr,total:sm(dd,x=>x.tot),incSet,todos}}
@@ -56,6 +56,8 @@ function rank(l,tipo,media,pac){const mx=Math.max(1,...l.map(x=>x.tot));
 // ---------- tela ----------
 function draw(){const G=S.G;if(!G)return;const per=S.gp==null?30:S.gp,c=calc(G,per),P=calcPac(S.GP,c),hoje=G.hoje;
   const dd=c.dd,vazio=!G.dias.some(d=>d.data>=MINI);
+  const pq={};((P&&P.itens)||[]).forEach(x=>{const k=x.data+'|'+x.turno;pq[k]=(pq[k]||0)+(Number(x.pacotes)||0)});
+  c.tr.forEach(t=>{const l=t.l.filter(d=>Number(d.horas)>0&&pq[d.data+'|'+d.turno]>0),h=sm(l,d=>Number(d.horas));t.pph=h>0?sm(l,d=>pq[d.data+'|'+d.turno])/h:null});
   const chartDias=cols(dd.map(x=>({l:dm(x.data),seg:x.t.map((v,i)=>({v,c:COR[i]})),cls:x.inc?'parc':'',tip:`${dl(x.data)}: ${x.tot} massas${x.inc?' (dia em andamento)':''}`})));
   const chartSem=cols(c.sem.map(s=>({l:DS[s.i],seg:[{v:s.media,c:'var(--pri)'}],cls:c.sbest&&s.i===c.sbest.i?'best':c.sworst&&s.i===c.sworst.i?'worst':'',tip:`${s.nome}: média de ${n(s.media,1)} massas em ${s.qtd} dia(s)`})),{w:56,h:150});
   const chartHora=cols(c.hr.map(x=>({l:String(x.h).padStart(2,'0')+'h',seg:x.t.map((v,i)=>({v,c:COR[i]})),tip:`${String(x.h).padStart(2,'0')}h: ${sm(x.t)} massas iniciadas`})),{w:30,h:140});
@@ -75,7 +77,7 @@ ${ins.length?`<div class=gcard><h3>Resumo da análise</h3><ul class=gins>${ins.m
 <div class=ggrid><div class=gcard><h3>▲ Mais produtivos</h3>${c.top.length&&c.ok.length>=2?rank(c.top,'top',c.media):'<p>Aparece quando houver pelo menos 2 dias completos no período.</p>'}</div>
 <div class=gcard><h3>▼ Menos produtivos</h3>${c.bot.length?rank(c.bot,'bot',c.media):'<p>Aparece quando houver pelo menos 2 dias completos no período.</p>'}</div></div>
 <div class=gcard><h3>Média de massas por dia da semana</h3>${chartSem}<small class=gnota>Só dias completos. Verde = melhor dia da semana, vermelho = mais fraco.</small></div>
-<div class=gcard><h3>Turnos</h3><div class=wrap><table><tr><th>Turno<th>Dias<th>Massas<th>Média/dia<th>Massas/hora<th>Temp. média<th>Meta atingida<th>Reprocesso</tr>${c.tr.map(t=>`<tr><td><i class=gdot style="background:${COR[t.i]}"></i>${t.nome}<td>${t.dias}<td>${n(t.massas)}<td>${t.dias?n(t.media,1):'—'}<td>${t.mh!=null?n(t.mh,1):'—'}<td>${t.temp!=null?n(t.temp,1)+'ºC':'—'}<td>${t.meta!=null?n(t.meta)+'%':'—'}<td>${t.rep!=null?n(t.rep,1)+'%':'—'}</tr>`).join('')}</table></div><small class=gnota>Considera só turnos já encerrados. Massas/hora = massas ÷ tempo entre a 1ª e a última batelada do turno.</small></div>
+<div class=gcard><h3>Turnos</h3><div class=wrap><table><tr><th>Turno<th>Dias<th>Massas<th>Média/dia<th>Massas/hora<th>Pacotes/hora<th>Temp. média<th>Meta atingida<th>Reprocesso</tr>${c.tr.map(t=>`<tr><td><i class=gdot style="background:${COR[t.i]}"></i>${t.nome}<td>${t.dias}<td>${n(t.massas)}<td>${t.dias?n(t.media,1):'—'}<td>${t.mh!=null?n(t.mh,1):'—'}<td>${t.pph!=null?n(t.pph)+' <small>('+n(t.pph/150,1)+' pallets)</small>':'—'}<td>${t.temp!=null?n(t.temp,1)+'ºC':'—'}<td>${t.meta!=null?n(t.meta)+'%':'—'}<td>${t.rep!=null?n(t.rep,1)+'%':'—'}</tr>`).join('')}</table></div><small class=gnota>Considera só turnos já encerrados. Massas/hora = massas ÷ tempo entre a 1ª e a última batelada do turno. Pacotes/hora = pacotes entregues ÷ esse mesmo tempo (só dias com pacotes no sistema).</small></div>
 <div class=ggrid><div class=gcard><h3>Massas por produto</h3>${Object.keys(c.prod).length?hbars(Object.entries(c.prod).sort((a,b)=>b[1]-a[1])):'<p>—</p>'}</div>
 <div class=gcard><h3>Massas iniciadas por hora do dia</h3>${leg()}${chartHora}</div></div>`}
 <div class="gcard gpac"><h3>Pacotes (embalamento)</h3><p class=gnota style="margin-top:0">A contagem de pacotes começou em <b>${fd(INI)}</b>. Os dias anteriores ficam de fora porque o embalamento ainda não estava no sistema.</p>
@@ -99,14 +101,14 @@ window.addEventListener('resize',()=>{if(S.TR&&document.querySelector('.trtot'))
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(S.TR&&document.querySelector('.trtot'))fitTempo()});
 function drawTempo(){const D=S.TR;if(!D)return;const L=D.pallets?(D.pallets.lista||[]):null,q=x=>Number(x.quantidade)||0;
   const T=TUR.map((nome,i)=>{const t=(D.turnos||[]).find(x=>x.turno===nome)||{},l=(L||[]).filter(x=>String(x.turno||'').slice(0,2)===nome.slice(0,2));
-    return{nome,i,st:t.status?(t.status==='encerrado'?'Encerrado':'Em andamento'):'Sem registro',massas:Number(t.massas)||0,batendo:Number(t.batendo)||0,pacotes:L?sm(l,q):null,pallets:L?l.length:null,med:L?pctMedia(l):null}});
+    return{nome,i,st:t.status?(t.status==='encerrado'?'Encerrado':'Em andamento'):'Sem registro',massas:Number(t.massas)||0,batendo:Number(t.batendo)||0,pacotes:L?sm(l,q):null,pallets:L?l.length:null}});
   const tot={massas:sm(T,x=>x.massas),pacotes:L?sm(L,q):null,pallets:L?L.length:null},v=x=>x==null?'—':n(x);
   A.innerHTML=head()+`<main class=tr><div class=trtop><h2>Tempo Real</h2><button onclick="sair()">Sair</button></div>
 <p class=trd>Dia de produção <b>${fd(D.data)}</b> · atualizado às <b>${esc(D.agora)}</b></p>
 <button class="big reg trbtn" onclick="GESTOR.load()">Atualizar</button>
 ${L?'':'<p class=aviso>Não foi possível carregar os pallets agora. Rode <b>supabase/migracao-gestor.sql</b> no Supabase (se ainda não rodou) e toque em Atualizar.</p>'}
 <div class=trtot><div><small>Massas</small><b>${v(tot.massas)}</b></div><div><small>Pacotes</small><b>${v(tot.pacotes)}</b></div><div><small>Pallets</small><b>${v(tot.pallets)}</b></div></div>
-${T.map(t=>`<div class="trt t${t.i+1}"><div class=trh><b>${t.nome}</b><span>${t.st}</span></div><div class=trg><div><small>Massas</small><b>${v(t.massas)}</b>${t.batendo?`<em class=trb>${t.batendo} batendo</em>`:''}</div><div><small>Pacotes</small><b>${v(t.pacotes)}</b></div><div><small>Pallets</small><b>${v(t.pallets)}</b></div></div><div class=trmed>Média: ${t.med?pctH(t.med):'—'}</div></div>`).join('')}</main>`}
+${T.map(t=>`<div class="trt t${t.i+1}"><div class=trh><b>${t.nome}</b><span>${t.st}</span></div><div class=trg><div><small>Massas</small><b>${v(t.massas)}</b>${t.batendo?`<em class=trb>${t.batendo} batendo</em>`:''}</div><div><small>Pacotes</small><b>${v(t.pacotes)}</b></div><div><small>Pallets</small><b>${v(t.pallets)}</b></div></div></div>`).join('')}</main>`}
 
 async function load(){if(window.PAGINA==='tempo')return loadTempo();const [G,P]=await Promise.all([rpc('gestor_dados'),rpcQ('gestor_pallets')]);S.G=G;S.GP=P;draw()}
 window.GESTOR={load,draw,per:v=>{S.gp=v;draw();window.scrollTo(0,0)}};
