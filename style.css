@@ -117,3 +117,6 @@ body:has(.tr) header .turno{font-size:clamp(26px,7.5vw,42px)}
 .pavc img{max-height:46vh;max-width:100%;object-fit:contain;border-radius:12px}
 .pavm{font-size:30px;font-weight:700;line-height:1.2}.pavm b{color:var(--run);font-size:46px}.pavs{font-size:20px;color:var(--er);font-weight:600}
 .pavc .big{min-width:260px}
+
+.ptot .pmed{font-size:11px;opacity:.75;margin-top:2px}
+.trmed{font-size:12px;opacity:.75;margin-top:6px;text-align:right}
