@@ -119,3 +119,5 @@ body:has(.tr) header .turno{font-size:clamp(26px,7.5vw,42px)}
 .pavc .big{min-width:260px}
 
 .ptot .pmed{font-size:11px;opacity:.75;margin-top:2px}
+
+.opbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:6px 0 10px;font-size:22px}.opbar button{min-height:48px;padding:6px 18px}
