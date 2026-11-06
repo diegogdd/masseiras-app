@@ -136,7 +136,7 @@ function remAbs(id){delete S.RP.abs[id];drawAbs()}
 // ---- Imagem do report para compartilhar (WhatsApp) ----
 const fvR=(v,d)=>{if(v===''||v==null)return '';if(d<0||typeof v!=='number')return String(v);return v.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})};
 const RIMG=[['ordem','Nº ORDEM',-1],['planejado','PLANEJADO',0],['produzido','PRODUZIDO',0],['pacotes','TOTAL DE PACOTES',0],['mr0036','MR0036 CONSUMIDOS',2],['mescla','MESCLA FARINHA',-1],['absorcao','ABSORÇÃO DE ÁGUA',-1],['mr0001','MR0001 CONSUMIDOS',2],['mr0036g','MR0036 GERADOS',2],['mr0027','MR0027 CONSUMIDOS',2],['gelo','PACOTES DE GELO',0]];
-function imgR(p,leg){return new Promise((ok,ko)=>{
+function imgR(p){return new Promise((ok,ko)=>{
 const W=[250,215,26,215,270],X=[0];W.forEach((w,i)=>X.push(X[i]+w));const TW=X[5],M=12,SC=2,RH=40,TH=54,GAP=14,ft='Barlow,Arial,Helvetica,sans-serif',
 AZ='#4472C4',ROT='#B4C6E7',LAR='#FFC000',VD='#00B050',CL='#DDEBF7',CZ='#D6DCE4',CZ2='#D9D9D9',VM='#FF0000';
 let ctx=document.createElement('canvas').getContext('2d');
@@ -145,7 +145,7 @@ const fit=(t,w,h,s0,b)=>{let s=s0,L;for(;s>=10;s--){ctx.font=`${b===false?400:70
 const pares=[];for(let i=0;i<Math.max(p.produtos.length,1);i+=2)pares.push(p.produtos.slice(i,i+2));
 const aus=p.ausentes.length?p.ausentes.map(a=>`${String(a.nome).toUpperCase()} (${a.motivo})`).join(' · '):'NENHUM';
 const wABS=W[1]+W[2]+W[3];ctx.font=`700 18px ${ft}`;const hA=Math.max(RH,wrap(aus,wABS-16).length*22+16);
-const FT=48,H=M*2+pares.length*(TH+14*RH+hA)+(pares.length-1)*GAP+(leg?FT:0);
+const H=M*2+pares.length*(TH+14*RH+hA)+(pares.length-1)*GAP;
 const c=document.createElement('canvas');c.width=(TW+M*2)*SC;c.height=H*SC;ctx=c.getContext('2d');ctx.scale(SC,SC);ctx.fillStyle='#fff';ctx.fillRect(0,0,TW+M*2,H);
 const cell=(x,y,w,h,fill,t,o)=>{o=o||{};ctx.fillStyle=fill||'#fff';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#000';ctx.lineWidth=1;ctx.strokeRect(x+.5,y+.5,w-1,h-1);if(t===''||t==null)return;
 const f=fit(t,w-14,h-8,o.s||18,o.b),lh=f.s*1.2;ctx.font=`${o.b===false?400:700} ${f.s}px ${ft}`;ctx.fillStyle=o.c||'#000';ctx.textAlign='center';ctx.textBaseline='middle';
@@ -159,14 +159,11 @@ cell(x(4),y,W[4],RH,ROT,first&&p.estoque_gelo!==''&&p.estoque_gelo!=null?fR(p.es
 RIMG.forEach(([k,rot,d],i)=>{cell(x(0),y,W[0],RH,ROT,rot,{s:16});[0,1].forEach(j=>{const q=par[j];cell(x(j?3:1),y,W[j?3:1],RH,LAR,q?fvR(q[k],d):'',{s:20})});cell(x(2),y,W[2],RH,CZ,'');
 if(!(first&&i>=1))cell(x(4),y,W[4],RH,ROT,'');if(first&&i===1)cell(x(4),y,W[4],RH*10,ROT,p.obs,{s:18,top:true});y+=RH});
 cell(x(0),y,W[0],hA,ROT,'ABSENTEÍSMO',{s:16});cell(x(1),y,w3,hA,VM,first?aus:'',{s:18,c:'#fff'});cell(x(4),y,W[4],hA,ROT,'');y+=hA+GAP});
-if(leg){ctx.font=`700 26px ${ft}`;ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(leg,M+TW/2,H-M+FT/2-4)}
 c.toBlob(b=>b?ok(b):ko(new Error('Falha ao gerar a imagem')),'image/png')})}
 function baixaImg(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
-const legR=p=>p.turno.replace('turno','Turno')+' - '+fd(p.data).replace(/\/20(\d\d)$/,'/$1');
-const ehCelular=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-async function compartilhaR(){const p=payloadR();let b;try{b=await imgR(p,ehCelular()?null:legR(p))}catch(e){return alert('Não foi possível gerar a imagem do report.')}
+async function compartilhaR(){const p=payloadR();let b;try{b=await imgR(p)}catch(e){return alert('Não foi possível gerar a imagem do report.')}
 salvaR(1).catch(()=>{});const n='Report_producao_'+p.data+'_'+p.turno.replace(/\W/g,'')+'.png',f=new File([b],n,{type:'image/png'});
-if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Report de produção JBT',text:legR(p)});return}catch(e){if(e&&e.name==='AbortError')return}}
+if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Report de produção JBT',text:p.turno.replace('turno','Turno')+' - '+fd(p.data).replace(/\/20(\d\d)$/,'/$1')});return}catch(e){if(e&&e.name==='AbortError')return}}
 baixaImg(b,n);alert('Este aparelho não abriu o compartilhamento. A imagem foi baixada: envie pelo WhatsApp a partir da galeria.')}
 // ---- Leitura do código de barras pela câmera (nº da ordem) ----
 const ZXURL='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
