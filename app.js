@@ -161,9 +161,21 @@ if(!(first&&i>=1))cell(x(4),y,W[4],RH,ROT,'');if(first&&i===1)cell(x(4),y,W[4],R
 cell(x(0),y,W[0],hA,ROT,'ABSENTEÍSMO',{s:16});cell(x(1),y,w3,hA,VM,first?aus:'',{s:18,c:'#fff'});cell(x(4),y,W[4],hA,ROT,'');y+=hA+GAP});
 c.toBlob(b=>b?ok(b):ko(new Error('Falha ao gerar a imagem')),'image/png')})}
 function baixaImg(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+// Legenda que acompanha a imagem (ex.: "2º Turno - 05/11/26")
+const legR=p=>p.turno.replace('turno','Turno')+' - '+fd(p.data).replace(/\/20(\d\d)$/,'/$1');
+const ehCelular=()=>/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+// No computador o WhatsApp não recebe a legenda pelo compartilhamento do sistema: abre uma janela para copiar imagem e legenda
+function janelaR(b,n,leg){const old=document.getElementById('jr');if(old)old.remove();const u=URL.createObjectURL(b),d=document.createElement('div');d.id='jr';
+d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto';
+d.innerHTML=`<div style="background:#fff;color:#111;border-radius:12px;max-width:560px;width:100%;padding:16px;display:flex;flex-direction:column;gap:10px"><b style="font-size:18px">Enviar pelo WhatsApp do computador</b><img src="${u}" style="max-width:100%;border:1px solid #ccc;border-radius:6px"><div style="font-size:14px">Legenda: <b>${esc(leg)}</b></div><div style="font-size:13px;opacity:.8">1) Copie a imagem e cole (Ctrl+V) na conversa do WhatsApp. 2) Copie a legenda e cole no campo de legenda antes de enviar.</div><div id=jrm style="font-size:13px;min-height:16px;color:#0a7a3b"></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class=big id=jri>1) Copiar imagem</button><button class=big id=jrl>2) Copiar legenda</button><button id=jrw>Abrir WhatsApp Web</button><button id=jrb>Baixar imagem</button><button id=jrx>Fechar</button></div></div>`;
+document.body.appendChild(d);const g=i=>d.querySelector('#'+i),m=t=>g('jrm').textContent=t,fecha=()=>{d.remove();URL.revokeObjectURL(u)};
+g('jri').onclick=async()=>{try{await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);m('Imagem copiada. Cole na conversa com Ctrl+V.')}catch(e){m('Este navegador não copiou a imagem. Use "Baixar imagem" e anexe no WhatsApp.')}};
+g('jrl').onclick=async()=>{try{await navigator.clipboard.writeText(leg);m('Legenda copiada. Cole no campo de legenda com Ctrl+V.')}catch(e){m('Não foi possível copiar. Legenda: '+leg)}};
+g('jrw').onclick=()=>window.open('https://web.whatsapp.com/','_blank');g('jrb').onclick=()=>baixaImg(b,n);g('jrx').onclick=fecha;d.onclick=e=>{if(e.target===d)fecha()}}
 async function compartilhaR(){const p=payloadR();let b;try{b=await imgR(p)}catch(e){return alert('Não foi possível gerar a imagem do report.')}
-salvaR(1).catch(()=>{});const n='Report_producao_'+p.data+'_'+p.turno.replace(/\W/g,'')+'.png',f=new File([b],n,{type:'image/png'});
-if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Report de produção JBT',text:p.turno.replace('turno','Turno')+' - '+fd(p.data).replace(/\/20(\d\d)$/,'/$1')});return}catch(e){if(e&&e.name==='AbortError')return}}
+salvaR(1).catch(()=>{});const n='Report_producao_'+p.data+'_'+p.turno.replace(/\W/g,'')+'.png',f=new File([b],n,{type:'image/png'}),leg=legR(p);
+if(!ehCelular())return janelaR(b,n,leg);
+if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Report de produção JBT',text:leg});return}catch(e){if(e&&e.name==='AbortError')return}}
 baixaImg(b,n);alert('Este aparelho não abriu o compartilhamento. A imagem foi baixada: envie pelo WhatsApp a partir da galeria.')}
 // ---- Leitura do código de barras pela câmera (nº da ordem) ----
 const ZXURL='https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
