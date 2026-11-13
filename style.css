@@ -124,3 +124,6 @@ body:has(.tr) header .turno{font-size:clamp(26px,7.5vw,42px)}
 /* Bateladas: nome da Diosna do lado de fora do cartão */
 .dsl{display:flex;align-items:center;gap:14px;margin-bottom:14px}.dsl .row{flex:1;min-width:0;margin-bottom:0}.dsl .dn{flex:none;min-width:128px;white-space:nowrap;text-align:right;font:900 22px 'Arial Black',Arial,Helvetica,sans-serif;color:var(--tx)}
 @media(max-width:700px){.dsl{flex-direction:column;align-items:stretch;gap:6px}.dsl .dn{min-width:0;text-align:left;font-size:20px}}
+/* Bateladas: cartões mais compactos */
+.row{font-size:16px;gap:8px 20px;padding:10px 14px;margin-bottom:10px}.row small{font-size:13px}.row b{font-size:23px}.row .st,.row .stt{font-size:19px}.row .mesc b,.row .mesc{font-size:19px;font-weight:700}.row button.big{font-size:19px;min-height:56px;padding:10px 22px}
+.dsl{margin-bottom:10px}.dsl .row{margin-bottom:0}.dsl .dn{font-size:19px;min-width:112px}
